@@ -1,0 +1,489 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap');
+
+:root {
+  --mocha: #c08b5c;
+  --mocha-dark: #ad7746;
+  --milky: #f7f2ea;
+  --cream: #fdf8f1;
+  --pastel-blue: #d8e9f3;
+}
+
+* {
+  font-family: 'Nunito', system-ui, -apple-system, sans-serif;
+}
+
+body {
+  background: linear-gradient(135deg, #d8e9f3 0%, #f0f5f8 50%, #fdf8f1 100%);
+  color: #2f2b28;
+  min-height: 100vh;
+  margin: 0;
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+body::-webkit-scrollbar {
+  display: none; /* Chrome, Safari */
+}
+
+.signup-link {
+  color: #2f2b28;
+  text-decoration: none;
+  transition: color 0.2s ease, text-decoration-color 0.2s ease;
+}
+
+.signup-link:hover {
+  color: #c08b5c;
+  text-decoration: underline;
+}
+
+.login-link {
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.2s ease, text-decoration-color 0.2s ease;
+}
+
+.login-link:hover {
+  color: #c08b5c;
+  text-decoration: underline;
+}
+
+.signup-save-btn {
+  background: #f6b7a0;
+  border: none;
+  color: #ffffff;
+  transition: background 0.2s ease, color 0.2s ease, border 0.2s ease;
+}
+
+.signup-save-btn:hover {
+  background: transparent;
+  border: 1px solid #f6b7a0;
+  color: #f6b7a0;
+}
+
+.signup-card .form-control {
+  border: none;
+  box-shadow: none;
+  background: #ffffff;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.signup-card .form-control:hover {
+  box-shadow: 0 0 0 2px rgba(248, 204, 188, 0.9);
+}
+
+.signup-card .form-control:focus {
+  border: none;
+  box-shadow: 0 0 0 2px rgba(248, 204, 188, 0.9);
+  outline: none;
+}
+
+.login-card .form-control {
+  border: none;
+  box-shadow: none;
+  background: #ffffff;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.login-card .form-control:hover {
+  box-shadow: 0 0 0 2px rgba(192, 139, 92, 0.25);
+}
+
+.login-card .form-control:focus {
+  border: none;
+  box-shadow: 0 0 0 2px rgba(192, 139, 92, 0.35);
+  outline: none;
+}
+
+.mocha-btn {
+  background: var(--mocha);
+  color: var(--milky);
+  border: none;
+  transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.mocha-btn:hover {
+  background: transparent;
+  color: var(--mocha);
+  border: 1px solid var(--mocha);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.12);
+}
+
+.login-btn {
+  background: transparent;
+  color: var(--mocha);
+  border: 1px solid var(--mocha);
+  transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+
+.login-btn:hover {
+  background: var(--mocha);
+  color: var(--milky);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.12);
+}
+
+.card-soft {
+  background: var(--milky);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+  border: 1px solid #efe5d7;
+}
+
+.form-control:focus {
+  border-color: var(--mocha);
+  box-shadow: 0 0 0 0.15rem rgba(192, 139, 92, 0.25);
+}
+
+.nav-cream {
+  background: #f8f3eb;
+  border-bottom: 1px solid #efe5d7;
+}
+
+.speech-bubble {
+  background: #ffffffdd;
+  border: 2px solid #f1e6d8;
+  border-radius: 16px;
+  padding: 14px 20px;
+  max-width: 300px;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.08);
+  position: relative;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #2f2b28;
+  line-height: 1.4;
+}
+
+.speech-bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 30px;
+  border-width: 10px 10px 0;
+  border-style: solid;
+  border-color: #ffffffdd transparent;
+}
+
+/* FLOATY ANIMATION - Gentle up and down */
+@keyframes floaty {
+  0%, 100% { 
+    transform: translateY(0px);
+  }
+  50% { 
+    transform: translateY(-12px);
+  }
+}
+
+/* BOUNCE ANIMATION - Subtle bounce */
+@keyframes bounce {
+  0%, 100% { 
+    transform: translateY(0px);
+  }
+  25% { 
+    transform: translateY(-8px);
+  }
+  50% { 
+    transform: translateY(0px);
+  }
+}
+
+/* SHAKE ANIMATION - Excited shaking */
+@keyframes shake {
+  0%, 100% { 
+    transform: translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% { 
+    transform: translateX(-2px);
+  }
+  20%, 40%, 60%, 80% { 
+    transform: translateX(2px);
+  }
+}
+
+/* PULSE ANIMATION - Soft pulsing */
+@keyframes pulse {
+  0%, 100% { 
+    opacity: 1;
+  }
+  50% { 
+    opacity: 0.85;
+  }
+}
+
+.floaty {
+  animation: floaty 4s ease-in-out infinite;
+}
+
+.wave-hand {
+  animation: shake 0.5s ease-in-out infinite;
+}
+
+.character-eyes {
+  animation: blink 3.8s ease-in-out infinite;
+}
+
+.bubble-fade {
+  animation: bubble 6s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%, 90%, 100% {
+    transform: scaleY(1);
+  }
+  95% {
+    transform: scaleY(0.1);
+  }
+}
+
+@keyframes bubble {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  20% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  80% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+.section-padding {
+  padding: 64px 20px;
+}
+
+.hero-bg {
+  background: linear-gradient(135deg, #d8e9f3 0%, #f0f5f8 50%, #fdf8f1 100%);
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+small.text-muted {
+  color: #8b8179 !important;
+}
+
+/* SVG stroke style */
+svg {
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.05));
+}
+
+/* Card hover effect with light pink and white shadow */
+.card-hover {
+  transition: box-shadow 0.3s ease;
+}
+
+/* Image slide on hover: starts left, centers on hover, returns smoothly */
+.card-img-slot {
+  min-height: 90px;
+  padding-bottom: 16px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  transition: justify-content 0.6s ease, align-items 0.6s ease;
+}
+
+.card-hover:hover .card-img-slot {
+  justify-content: center;
+  align-items: center;
+}
+
+.card-img-animate {
+  transition: transform 0.6s ease;
+  transform: translateX(0);
+}
+
+.card-img-milky {
+  max-height: 70px;
+  max-width: 100%;
+  object-fit: contain;
+  transition: max-height 0.25s ease, transform 0.25s ease;
+}
+
+.card-one {
+  transition: transform 0.25s ease;
+}
+
+.card-one:hover {
+  transform: scale(1.02);
+}
+
+.card-one:hover .card-img-slot {
+  justify-content: center;
+  align-items: center;
+}
+
+.card-one:hover .card-img-milky {
+  max-height: 90px;
+}
+
+.card-peach:hover {
+  box-shadow: 0 16px 36px rgba(255, 191, 180, 0.55), 0 0 24px rgba(255, 255, 255, 0.65) !important;
+}
+
+.card-brown:hover {
+  box-shadow: 0 16px 36px rgba(218, 160, 109, 0.55), 0 0 24px rgba(255, 255, 255, 0.65) !important;
+}
+
+/* How It Works Section Animations */
+@keyframes fadeInSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes softBounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.how-it-works-step {
+  animation: fadeInSlideUp 0.6s ease-out forwards;
+  transition: all 0.3s ease;
+}
+
+.how-it-works-step:hover {
+  box-shadow: 0 20px 50px rgba(240, 177, 160, 0.5), 0 0 40px rgba(255, 255, 255, 0.8) !important;
+  transform: translateY(-10px) scale(1.12);
+}
+
+.step-1 {
+  animation-delay: 0s;
+}
+
+.step-2 {
+  animation-delay: 0.15s;
+}
+
+.step-3 {
+  animation-delay: 0.3s;
+}
+
+.step-4 {
+  animation-delay: 0.45s;
+}
+
+/* Balance Section Animations */
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeInGlow {
+  from {
+    opacity: 0;
+    filter: blur(5px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+@keyframes gentleFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.balance-milky {
+  animation: slideInLeft 0.8s ease-out forwards;
+}
+
+.balance-mocha {
+  animation: slideInRight 0.8s ease-out forwards;
+  animation-delay: 0.1s;
+}
+
+.balance-center {
+  animation: fadeInGlow 1s ease-out forwards;
+  animation-delay: 0.2s;
+}
+
+.balance-card {
+  transition: all 0.3s ease;
+}
+
+.balance-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 16px 40px rgba(240, 177, 160, 0.3) !important;
+}
+
+/* Flip Card Styles */
+.flip-card {
+  background-color: transparent;
+  width: 100%;
+  height: 280px;
+  perspective: 1000px;
+}
+
+.flip-card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  transition: transform 0.6s;
+  transform-style: preserve-3d;
+}
+
+.flip-card:hover .flip-card-inner {
+  transform: rotateY(180deg);
+}
+
+.flip-card-front, .flip-card-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flip-card-front {
+  background-color: transparent;
+  color: black;
+}
+
+.flip-card-back {
+  background-color: transparent;
+  color: white;
+  transform: rotateY(180deg);
+}
