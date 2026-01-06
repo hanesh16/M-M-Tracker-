@@ -1,14 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import Character from '../components/Character';
-import SpeechBubble from '../components/SpeechBubble';
-
-const messages = [
-  'Track your daily income like salary',
-  'Add daily expenses easily',
-  'See how much you save',
-  'View monthly summaries'
-];
+import Footer from '../components/Footer';
 
 const LandingPage = () => {
   return (
@@ -18,8 +11,9 @@ const LandingPage = () => {
           <div className="row align-items-center g-4" style={{ minHeight: '100vh' }}>
             {/* Left side - Text content */}
             <div className="col-lg-6 d-flex flex-column justify-content-center">
-              <h1 className="fw-bold mb-3" style={{ color: '#2f2b28', fontSize: '2.5rem', marginTop: 0 }}>
-                Daily Expense Tracker
+              <h1 className="fw-bold mb-3" style={{ marginTop: 0 }}>
+                <span style={{ color: '#2f2b28', fontSize: '2.5rem' }}>M&M Tracker</span>
+                <span style={{ color: '#9b8f84', fontSize: '1.5rem', fontStyle: 'italic' }}> - Daily Expense Tracker</span>
               </h1>
               <p className="lead text-muted mb-4">
                 Meet Mocha and Milky! They’ll help you track every expense, manage your bills and taxes, and watch your savings grow. With gentle guidance from Mocha and Milky, easy-to-read summaries, and a clean visual design, the tracker helps you build better money habits and make smarter financial decisions every day.
@@ -196,6 +190,8 @@ const LandingPage = () => {
           </div>
         </div>
       </section>
+
+      <Footer />
     </>
   );
 };

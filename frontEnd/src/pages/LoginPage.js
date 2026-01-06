@@ -65,7 +65,8 @@ const LoginPage = () => {
         overflow: 'hidden',
         padding: '24px 16px',
         boxSizing: 'border-box',
-        margin: 0
+        margin: 0,
+        backgroundColor: '#f8f3ee'
       }}
     >
       <div className="card-soft rounded-4 p-4 p-md-5 login-card" style={{ maxWidth: 460, width: '100%' }}>

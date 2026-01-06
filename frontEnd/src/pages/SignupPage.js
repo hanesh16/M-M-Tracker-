@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 
 const SignupPage = () => {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ name: '', email: '', phone: '', password: '', confirmPassword: '' });
+  const [form, setForm] = useState({ name: '', email: '', phone: '', category: 'Select one', password: '', confirmPassword: '' });
   const [error, setError] = useState('');
 
   const handleChange = (e) => {
@@ -14,7 +14,7 @@ const SignupPage = () => {
     e.preventDefault();
     setError('');
 
-    if (!form.name || !form.email || !form.phone || !form.password || !form.confirmPassword) {
+    if (!form.name || !form.email || !form.phone || !form.category || form.category === 'Select one' || !form.password || !form.confirmPassword) {
       setError('Please fill in all fields.');
       return;
     }
@@ -24,13 +24,24 @@ const SignupPage = () => {
       return;
     }
 
+    const defaultCurrency = form.category === 'Milky' ? 'INR' : 'USD';
+
     // Persist user to localStorage for demo only
     localStorage.setItem('det-user', JSON.stringify({
       name: form.name,
       email: form.email,
       phone: form.phone,
-      password: form.password
+      password: form.password,
+      category: form.category,
+      joinDate: new Date().toISOString().slice(0, 10)
     }));
+
+    const existingSettings = JSON.parse(localStorage.getItem('det-settings') || '{}');
+    localStorage.setItem('det-settings', JSON.stringify({
+      ...existingSettings,
+      currency: defaultCurrency
+    }));
+
     localStorage.setItem('det-auth', 'false');
     navigate('/login');
   };
@@ -80,6 +91,14 @@ const SignupPage = () => {
           <div className="col-12">
             <label className="form-label">Phone Number</label>
             <input name="phone" className="form-control" value={form.phone} onChange={handleChange} required />
+          </div>
+          <div className="col-12">
+            <label className="form-label">Category</label>
+            <select name="category" className="form-control" value={form.category} onChange={handleChange} required>
+              <option value="Select one">Select one</option>
+              <option value="Mocha">Mocha</option>
+              <option value="Milky">Milky</option>
+            </select>
           </div>
           <div className="col-md-6">
             <label className="form-label">Password</label>
