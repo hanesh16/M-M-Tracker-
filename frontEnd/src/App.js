@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
 import SignupPage from './pages/SignupPage';
 import LoginPage from './pages/LoginPage';
+import VerifyEmail from './pages/VerifyEmail';
 import DashboardPage from './pages/DashboardPage';
 import AddExpense from './pages/AddExpense';
 import AddIncome from './pages/AddIncome';
@@ -13,8 +14,8 @@ import Help from './pages/Help';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import faviconImg from './images/pic6.png';
 
-// Simple auth helper using localStorage flag
-const isLoggedIn = () => localStorage.getItem('det-auth') === 'true';
+// Simple auth helper using JWT token
+const isLoggedIn = () => localStorage.getItem('det-token') !== null;
 
 const App = () => {
   useEffect(() => {
@@ -34,6 +35,7 @@ const App = () => {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/signup" element={<SignupPage />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/aboutus" element={<AboutUs />} />
         <Route path="/help" element={<Help />} />

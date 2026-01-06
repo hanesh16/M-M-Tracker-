@@ -1,49 +1,69 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
+const API_BASE_URL = 'http://localhost:8000';
+
 const SignupPage = () => {
   const navigate = useNavigate();
   const [form, setForm] = useState({ name: '', email: '', phone: '', category: 'Select one', password: '', confirmPassword: '' });
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
 
     if (!form.name || !form.email || !form.phone || !form.category || form.category === 'Select one' || !form.password || !form.confirmPassword) {
       setError('Please fill in all fields.');
+      setLoading(false);
       return;
     }
 
     if (form.password !== form.confirmPassword) {
       setError('Passwords must match.');
+      setLoading(false);
       return;
     }
 
-    const defaultCurrency = form.category === 'Milky' ? 'INR' : 'USD';
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/signup`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          name: form.name,
+          email: form.email,
+          phone: form.phone,
+          category: form.category,
+          password: form.password
+        })
+      });
 
-    // Persist user to localStorage for demo only
-    localStorage.setItem('det-user', JSON.stringify({
-      name: form.name,
-      email: form.email,
-      phone: form.phone,
-      password: form.password,
-      category: form.category,
-      joinDate: new Date().toISOString().slice(0, 10)
-    }));
+      const data = await response.json();
 
-    const existingSettings = JSON.parse(localStorage.getItem('det-settings') || '{}');
-    localStorage.setItem('det-settings', JSON.stringify({
-      ...existingSettings,
-      currency: defaultCurrency
-    }));
+      if (!response.ok) {
+        setError(data.detail || 'Signup failed. Please try again.');
+        setLoading(false);
+        return;
+      }
 
-    localStorage.setItem('det-auth', 'false');
-    navigate('/login');
+      // Store verification info and email
+      localStorage.setItem('det-signup-email', form.email);
+      setError('');
+      alert('Account created! Check console for verification link.');
+      navigate('/verify-email');
+    } catch (err) {
+      setError('Network error. Make sure backend is running on http://localhost:8000');
+      console.error('Signup error:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

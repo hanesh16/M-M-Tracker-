@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
+const API_BASE_URL = 'http://localhost:8000';
+
 const LoginPage = () => {
   useEffect(() => {
     const root = document.documentElement;
@@ -31,29 +33,44 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
 
-    const saved = localStorage.getItem('det-user');
-    if (!saved) {
-      setError('No user found. Please sign up first.');
-      return;
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email: form.email,
+          password: form.password
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.detail || 'Login failed. Please try again.');
+        setLoading(false);
+        return;
+      }
+
+      // Store token
+      localStorage.setItem('det-token', data.access_token);
+      navigate('/dashboard');
+    } catch (err) {
+      setError('Network error. Make sure backend is running on http://localhost:8000');
+      console.error('Login error:', err);
+    } finally {
+      setLoading(false);
     }
-
-    const user = JSON.parse(saved);
-    const matches = user.email === form.email && user.password === form.password;
-
-    if (!matches) {
-      setError('Email or password is incorrect.');
-      return;
-    }
-
-    localStorage.setItem('det-auth', 'true');
-    navigate('/dashboard');
   };
 
   return (
@@ -104,7 +121,9 @@ const LoginPage = () => {
             <input type="password" name="password" className="form-control" value={form.password} onChange={handleChange} required />
           </div>
           <div className="col-12 d-grid">
-            <button type="submit" className="btn mocha-btn py-2 fw-semibold">Login</button>
+            <button type="submit" className="btn mocha-btn py-2 fw-semibold" disabled={loading}>
+              {loading ? 'Logging in...' : 'Login'}
+            </button>
           </div>
         </form>
 

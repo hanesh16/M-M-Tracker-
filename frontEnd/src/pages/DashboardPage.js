@@ -1,9 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import NavHeader from '../components/NavHeader';
 import Footer2 from '../components/footer2';
 
+const API_BASE_URL = 'http://localhost:8000';
+
 const DashboardPage = () => {
   const [userName, setUserName] = useState('');
+  const token = localStorage.getItem('det-token');
   const [selectedDay, setSelectedDay] = useState('');
   const [selectedMonth, setSelectedMonth] = useState('');
   const [selectedYear, setSelectedYear] = useState('');
@@ -52,20 +55,20 @@ const DashboardPage = () => {
     'Other'
   ];
 
-  const [recentExpenses, setRecentExpenses] = useState(() => {
-    const saved = localStorage.getItem('det-expenses');
-    if (saved) {
-      return JSON.parse(saved);
+  const [recentExpenses, setRecentExpenses] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchRecentActivity = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/dashboard/recent-activity?token=${token}&limit=10`);
+      if (response.ok) {
+        const data = await response.json();
+        setRecentExpenses(data);
+      }
+    } catch (err) {
+      console.error('Error fetching recent activity:', err);
     }
-    return [
-      { id: 1, category: 'Groceries', amount: 45.50, date: '2026-01-05', type: 'expense' },
-      { id: 6, category: 'Wifi Bill', amount: 20.00, date: '2026-01-05', type: 'expense' },
-      { id: 2, category: 'Transport', amount: 12.00, date: '2026-01-04', type: 'expense' },
-      { id: 3, category: 'Entertainment', amount: 25.00, date: '2026-01-03', type: 'expense' },
-      { id: 4, category: 'Coffee', amount: 8.50, date: '2026-01-02', type: 'expense' },
-      { id: 5, category: 'Dinner', amount: 35.00, date: '2026-01-01', type: 'expense' }
-    ];
-  });
+  }, [token]);
 
   // Filter expenses
   const filteredExpenses = recentExpenses.filter((expense) => {
@@ -93,81 +96,105 @@ const DashboardPage = () => {
   });
 
   // Handle expense form submission
-  const handleExpenseSubmit = (e) => {
+  const handleExpenseSubmit = async (e) => {
     e.preventDefault();
     if (expenseCategory && expenseAmount && expenseDate) {
-      const newExpense = {
-        id: Math.max(...recentExpenses.map(e => e.id), 0) + 1,
-        category: expenseCategory,
-        amount: parseFloat(expenseAmount),
-        date: expenseDate,
-        notes: expenseNotes,
-        type: 'expense'
-      };
-      const updatedExpenses = [...recentExpenses, newExpense].sort((a, b) => {
-        const diff = new Date(b.date) - new Date(a.date);
-        if (diff !== 0) return diff;
-        return b.id - a.id;
-      });
-      setRecentExpenses(updatedExpenses);
-      setExpenseIdOrder(updatedExpenses.map(exp => exp.id));
-      console.log({ expenseCategory, expenseAmount, expenseDate, expenseNotes });
-      setExpenseSubmitted(true);
-      setTimeout(() => {
-        setExpenseCategory('');
-        setExpenseAmount('');
-        setExpenseDate('');
-        setExpenseNotes('');
-        setExpenseSubmitted(false);
-        setShowExpenseModal(false);
-      }, 2000);
+      try {
+        const response = await fetch(`${API_BASE_URL}/expenses/?token=${token}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            category: expenseCategory,
+            amount: parseFloat(expenseAmount),
+            expense_date: expenseDate,
+            notes: expenseNotes,
+            expense_type: 'additional'
+          })
+        });
+
+        if (response.ok) {
+          // Refresh expenses
+          fetchRecentActivity();
+          setExpenseSubmitted(true);
+          setTimeout(() => {
+            setExpenseCategory('');
+            setExpenseAmount('');
+            setExpenseDate('');
+            setExpenseNotes('');
+            setExpenseSubmitted(false);
+            setShowExpenseModal(false);
+          }, 2000);
+        }
+      } catch (err) {
+        console.error('Error submitting expense:', err);
+      }
     }
   };
-  
+
   // Handle income form submission
-  const handleIncomeSubmit = (e) => {
+  const handleIncomeSubmit = async (e) => {
     e.preventDefault();
     if (incomeSource && incomeAmount && incomeDate) {
-      const newIncome = {
-        id: Math.max(...recentExpenses.map(e => e.id), 0) + 1,
-        category: incomeSource,
-        amount: parseFloat(incomeAmount),
-        date: incomeDate,
-        notes: incomeNotes,
-        type: 'income'
-      };
-      const updatedExpenses = [...recentExpenses, newIncome].sort((a, b) => {
-        const diff = new Date(b.date) - new Date(a.date);
-        if (diff !== 0) return diff;
-        return b.id - a.id;
-      });
-      setRecentExpenses(updatedExpenses);
-      setExpenseIdOrder(updatedExpenses.map(exp => exp.id));
-      console.log({ incomeSource, incomeAmount, incomeDate, incomeNotes });
-      setIncomeSubmitted(true);
-      setTimeout(() => {
-        setIncomeSource('');
-        setIncomeAmount('');
-        setIncomeDate('');
-        setIncomeNotes('');
-        setIncomeSubmitted(false);
-        setShowIncomeModal(false);
-      }, 2000);
+      try {
+        const response = await fetch(`${API_BASE_URL}/incomes/?token=${token}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            source: incomeSource,
+            amount: parseFloat(incomeAmount),
+            income_date: incomeDate,
+            notes: incomeNotes
+          })
+        });
+
+        if (response.ok) {
+          // Refresh incomes
+          fetchRecentActivity();
+          setIncomeSubmitted(true);
+          setTimeout(() => {
+            setIncomeAmount('');
+            setIncomeDate('');
+            setIncomeNotes('');
+            setIncomeSubmitted(false);
+            setShowIncomeModal(false);
+          }, 2000);
+        }
+      } catch (err) {
+        console.error('Error submitting income:', err);
+      }
     }
   };
 
   useEffect(() => {
-    const userData = localStorage.getItem('det-user');
-    if (userData) {
-      const user = JSON.parse(userData);
-      setUserName(user.name || 'User');
-    }
-  }, []);
+    const fetchUserData = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/auth/me?token=${token}`);
+        if (response.ok) {
+          const user = await response.json();
+          setUserName(user.name || 'User');
+        }
+      } catch (err) {
+        console.error('Error fetching user:', err);
+      }
+    };
 
-  // Save to localStorage whenever recentExpenses changes
+    if (token) {
+      fetchUserData();
+      fetchRecentActivity();
+      setLoading(false);
+    }
+  }, [token, fetchRecentActivity]);
+
+  // Reload recent activity when filters change
   useEffect(() => {
-    localStorage.setItem('det-expenses', JSON.stringify(recentExpenses));
-  }, [recentExpenses]);
+    if (token && !loading) {
+      fetchRecentActivity();
+    }
+  }, [selectedMonth, selectedYear, token, loading, fetchRecentActivity]);
 
   // Initialize expense order
   useEffect(() => {

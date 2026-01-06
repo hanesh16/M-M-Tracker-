@@ -19,8 +19,7 @@ const NavHeader = () => {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('det-auth');
-    localStorage.removeItem('det-user');
+    localStorage.removeItem('det-token');
     navigate('/');
   };
 
