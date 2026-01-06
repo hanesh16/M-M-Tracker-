@@ -1,7 +1,7 @@
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
 from typing import Optional
-from jose import JwtError, jwt
+from jose import JWTError, jwt
 from pydantic import ValidationError
 import os
 
@@ -12,10 +12,12 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 1440  # 24 hours
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
+    # Truncate to 72 bytes for bcrypt compatibility
+    return pwd_context.verify(plain_password[:72], hashed_password)
 
 def get_password_hash(password: str) -> str:
-    return pwd_context.hash(password)
+    # Truncate to 72 bytes for bcrypt compatibility
+    return pwd_context.hash(password[:72])
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     to_encode = data.copy()
@@ -34,7 +36,7 @@ def verify_token(token: str) -> Optional[str]:
         if email is None:
             return None
         return email
-    except JwtError:
+    except JWTError:
         return None
 
 def create_verification_token(email: str, expires_delta: Optional[timedelta] = None) -> str:
@@ -55,5 +57,5 @@ def verify_verification_token(token: str) -> Optional[str]:
         if email is None or token_type != "verification":
             return None
         return email
-    except JwtError:
+    except JWTError:
         return None

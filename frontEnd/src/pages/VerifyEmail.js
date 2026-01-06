@@ -1,29 +1,24 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const API_BASE_URL = 'http://localhost:8000';
 
 const VerifyEmail = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [tokenInput, setTokenInput] = useState('');
 
-  const token = searchParams.get('token');
-
-  useEffect(() => {
-    if (token) {
-      verifyWithToken(token);
-    } else {
-      setLoading(false);
-    }
-  }, [token]);
+  // No email delivery; user copies token from backend console and pastes here
+  React.useEffect(() => {
+    setLoading(false);
+  }, []);
 
   const verifyWithToken = async (verificationToken) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/verify?token=${verificationToken}`);
+      const cleanToken = verificationToken.trim();
+      const response = await fetch(`${API_BASE_URL}/auth/verify?token=${cleanToken}`);
       const data = await response.json();
 
       if (response.ok) {
@@ -76,10 +71,10 @@ const VerifyEmail = () => {
           <div className="alert alert-danger py-2 mb-3">{error}</div>
         )}
 
-        {!token && !loading && (
+        {!loading && (
           <>
             <p className="text-muted mb-3">
-              Check the console output or your terminal where the backend is running for the verification token. Copy it below:
+              Open the backend terminal, copy the verification token printed there, and paste it below.
             </p>
             <form onSubmit={handleManualVerify} className="row g-3">
               <div className="col-12">

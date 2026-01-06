@@ -4,6 +4,7 @@ from app.database import get_db
 from app.models import Expense, User, Settings
 from app.schemas import ExpenseCreate, ExpenseResponse
 from app.security import verify_token
+from app.currency_utils import convert_amount
 from datetime import date
 from typing import List, Optional
 
@@ -28,6 +29,10 @@ def create_expense(
 ):
     user = get_current_user(token, db)
     
+    # Get user's currency for response
+    settings = db.query(Settings).filter(Settings.user_id == user.id).first()
+    currency = settings.currency if settings else "USD"
+    
     db_expense = Expense(
         user_id=user.id,
         category=expense.category,
@@ -39,7 +44,16 @@ def create_expense(
     db.add(db_expense)
     db.commit()
     db.refresh(db_expense)
-    return db_expense
+    
+    # Return with converted amount
+    rate = settings.usd_to_inr_rate if settings else 83.0
+    converted_amount = convert_amount(db_expense.amount, "USD", currency, rate)
+    
+    response = ExpenseResponse.from_orm(db_expense)
+    response.currency = currency
+    # Override amount with converted value for response
+    response.amount = converted_amount
+    return response
 
 @router.get("/", response_model=List[ExpenseResponse])
 def list_expenses(
@@ -48,9 +62,14 @@ def list_expenses(
     year: Optional[int] = None,
     category: Optional[str] = None,
     expense_type: Optional[str] = None,
-    db: Session = Depends(get_db) = None
+    db: Session = Depends(get_db)
 ):
     user = get_current_user(token, db)
+    
+    # Get user's currency
+    settings = db.query(Settings).filter(Settings.user_id == user.id).first()
+    currency = settings.currency if settings else "USD"
+    rate = settings.usd_to_inr_rate if settings else 83.0
     
     query = db.query(Expense).filter(Expense.user_id == user.id)
     
@@ -69,7 +88,18 @@ def list_expenses(
     if expense_type:
         query = query.filter(Expense.expense_type == expense_type)
     
-    return query.order_by(Expense.expense_date.desc()).all()
+    expenses = query.order_by(Expense.expense_date.desc()).all()
+    
+    # Convert amounts and add currency to response
+    result = []
+    for expense in expenses:
+        converted_amount = convert_amount(expense.amount, "USD", currency, rate)
+        response = ExpenseResponse.from_orm(expense)
+        response.currency = currency
+        response.amount = converted_amount
+        result.append(response)
+    
+    return result
 
 @router.delete("/{expense_id}")
 def delete_expense(

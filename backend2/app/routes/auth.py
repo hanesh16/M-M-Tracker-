@@ -1,12 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.models import User, Settings
-from app.schemas import UserCreate, UserLogin, UserResponse, Token
+from app.models import User, Settings, Expense, Income, SavingPlan
+from app.schemas import UserCreate, UserLogin, UserResponse, Token, UserUpdate
 from app.security import (
     get_password_hash, verify_password, create_access_token,
     create_verification_token, verify_verification_token, verify_token
 )
+from app.email_service import send_verification_email
 from datetime import datetime, timedelta
 from pydantic import EmailStr
 
@@ -25,6 +26,7 @@ def signup(user_data: UserCreate, db: Session = Depends(get_db)):
     
     # Create user
     hashed_password = get_password_hash(user_data.password)
+    default_avatar = "pic3" if user_data.category == "Milky" else "pic4"
     db_user = User(
         name=user_data.name,
         email=user_data.email,
@@ -33,6 +35,7 @@ def signup(user_data: UserCreate, db: Session = Depends(get_db)):
         category=user_data.category,
         verification_token=verification_token,
         verification_token_expiry=verification_token_expiry,
+        default_avatar=default_avatar,
         is_verified=False
     )
     db.add(db_user)
@@ -48,19 +51,11 @@ def signup(user_data: UserCreate, db: Session = Depends(get_db)):
     db.add(settings)
     db.commit()
     
-    # Print verification link in console (dev mode)
-    verification_link = f"http://localhost:3000/verify?token={verification_token}"
-    print(f"\n{'='*60}")
-    print(f"VERIFICATION EMAIL (DEV MODE - Console)")
-    print(f"{'='*60}")
-    print(f"User: {user_data.email}")
-    print(f"Verification Link: {verification_link}")
-    print(f"Token: {verification_token}")
-    print(f"Expires: {verification_token_expiry}")
-    print(f"{'='*60}\n")
+    # Send verification email (with fallback to console)
+    send_verification_email(user_data.email, verification_token)
     
     return {
-        "message": "User created successfully. Check console for verification link.",
+        "message": "User created successfully. Verification email sent.",
         "user_id": db_user.id,
         "email": db_user.email
     }
@@ -109,3 +104,51 @@ def get_current_user(token: str = None, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="User not found")
     
     return user
+
+@router.put("/me", response_model=UserResponse)
+def update_current_user(update: UserUpdate, token: str = None, db: Session = Depends(get_db)):
+    if not token:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    email = verify_token(token)
+    if not email:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if update.name is not None:
+        user.name = update.name
+    if update.profile_picture is not None:
+        user.profile_picture = update.profile_picture
+
+    db.commit()
+    db.refresh(user)
+    return user
+@router.delete("/data")
+def delete_user_data(token: str = None, db: Session = Depends(get_db)):
+    """Delete all user data: expenses, incomes, and saving plans"""
+    if not token:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    email = verify_token(token)
+    if not email:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Delete all expenses
+    db.query(Expense).filter(Expense.user_id == user.id).delete()
+    
+    # Delete all incomes
+    db.query(Income).filter(Income.user_id == user.id).delete()
+    
+    # Delete all saving plans
+    db.query(SavingPlan).filter(SavingPlan.user_id == user.id).delete()
+    
+    db.commit()
+    
+    return {"message": "All user data deleted successfully"}

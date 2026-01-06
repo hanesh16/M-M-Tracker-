@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.models import Income, User
+from app.models import Income, User, Settings
 from app.schemas import IncomeCreate, IncomeResponse
 from app.security import verify_token
+from app.currency_utils import convert_amount
 from typing import List, Optional
 
 router = APIRouter(prefix="/incomes", tags=["incomes"])
@@ -27,6 +28,10 @@ def create_income(
 ):
     user = get_current_user(token, db)
     
+    # Get user's currency for response
+    settings = db.query(Settings).filter(Settings.user_id == user.id).first()
+    currency = settings.currency if settings else "USD"
+    
     db_income = Income(
         user_id=user.id,
         source=income.source,
@@ -37,7 +42,15 @@ def create_income(
     db.add(db_income)
     db.commit()
     db.refresh(db_income)
-    return db_income
+    
+    # Return with converted amount
+    rate = settings.usd_to_inr_rate if settings else 83.0
+    converted_amount = convert_amount(db_income.amount, "USD", currency, rate)
+    
+    response = IncomeResponse.from_orm(db_income)
+    response.currency = currency
+    response.amount = converted_amount
+    return response
 
 @router.get("/", response_model=List[IncomeResponse])
 def list_incomes(
@@ -45,9 +58,14 @@ def list_incomes(
     month: Optional[int] = None,
     year: Optional[int] = None,
     source: Optional[str] = None,
-    db: Session = Depends(get_db) = None
+    db: Session = Depends(get_db)
 ):
     user = get_current_user(token, db)
+    
+    # Get user's currency
+    settings = db.query(Settings).filter(Settings.user_id == user.id).first()
+    currency = settings.currency if settings else "USD"
+    rate = settings.usd_to_inr_rate if settings else 83.0
     
     query = db.query(Income).filter(Income.user_id == user.id)
     
@@ -63,7 +81,18 @@ def list_incomes(
     if source:
         query = query.filter(Income.source == source)
     
-    return query.order_by(Income.income_date.desc()).all()
+    incomes = query.order_by(Income.income_date.desc()).all()
+    
+    # Convert amounts and add currency to response
+    result = []
+    for income in incomes:
+        converted_amount = convert_amount(income.amount, "USD", currency, rate)
+        response = IncomeResponse.from_orm(income)
+        response.currency = currency
+        response.amount = converted_amount
+        result.append(response)
+    
+    return result
 
 @router.delete("/{income_id}")
 def delete_income(

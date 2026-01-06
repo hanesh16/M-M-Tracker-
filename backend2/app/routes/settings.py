@@ -21,7 +21,7 @@ def get_current_user(token: str = None, db: Session = Depends(get_db)) -> User:
 @router.get("/", response_model=SettingsResponse)
 def get_settings(
     token: str = None,
-    db: Session = Depends(get_db) = None
+    db: Session = Depends(get_db)
 ):
     user = get_current_user(token, db)
     
@@ -40,7 +40,7 @@ def get_settings(
 def update_settings(
     settings_data: SettingsBase,
     token: str = None,
-    db: Session = Depends(get_db) = None
+    db: Session = Depends(get_db)
 ):
     user = get_current_user(token, db)
     

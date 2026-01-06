@@ -1,8 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import NavHeader from '../components/NavHeader';
 import Footer2 from '../components/footer2';
+import { useCurrency } from '../context/CurrencyContext';
+import { formatMoney } from '../utils/currencyUtils';
 
 const AddIncome = () => {
+  const API_BASE_URL = 'http://localhost:8000';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('det-token') : null;
+  const { currency } = useCurrency();
   // Form states
   const [source, setSource] = useState('');
   const [amount, setAmount] = useState('');
@@ -26,51 +31,63 @@ const AddIncome = () => {
   const [selectedForDeleteIncomes, setSelectedForDeleteIncomes] = useState(new Set());
   const [selectedForDeletePlans, setSelectedForDeletePlans] = useState(new Set());
 
-  // Load income data from localStorage
-  const [incomes, setIncomes] = useState(() => {
-    const saved = localStorage.getItem('det-all-incomes');
-    if (saved) {
-      return JSON.parse(saved);
+  // Income data from backend
+  const [incomes, setIncomes] = useState([]);
+
+  // Expenses from backend for monthly summary
+  const [expenses, setExpenses] = useState([]);
+
+  // Saving plans from backend
+  const [savingPlans, setSavingPlans] = useState([]);
+  const [plannedTotal, setPlannedTotal] = useState(0);
+  const [plannedCount, setPlannedCount] = useState(0);
+
+  // Fetch incomes/expenses from backend
+  const fetchIncomes = async () => {
+    try {
+      if (!token) return;
+      const res = await fetch(`${API_BASE_URL}/incomes/?token=${token}`);
+      if (res.ok) {
+        const data = await res.json();
+        const mapped = data.map(i => ({
+          id: i.id,
+          source: i.source,
+          amount: i.amount,
+          date: i.income_date,
+          notes: i.notes || ''
+        }));
+        setIncomes(mapped);
+      }
+    } catch (err) {
+      console.error('Failed to load incomes', err);
     }
-    return [
-      { id: 1, source: 'Salary', amount: 3500, date: '2026-01-01', notes: 'Monthly salary' },
-      { id: 2, source: 'Freelance', amount: 800, date: '2026-01-05', notes: 'Web design project' },
-      { id: 3, source: 'Investment', amount: 200, date: '2026-01-10', notes: 'Dividend income' },
-      { id: 4, source: 'Bonus', amount: 500, date: '2026-01-15', notes: 'Performance bonus' }
-    ];
-  });
+  };
 
-  // Load expense data from localStorage for monthly summary
-  const [expenses, setExpenses] = useState(() => {
-    const saved = localStorage.getItem('det-all-expenses');
-    if (saved) {
-      return JSON.parse(saved);
+  const fetchExpenses = async () => {
+    try {
+      if (!token) return;
+      const res = await fetch(`${API_BASE_URL}/expenses/?token=${token}`);
+      if (res.ok) {
+        const data = await res.json();
+        const mapped = data.map(e => ({
+          id: e.id,
+          amount: e.amount,
+          date: e.expense_date
+        }));
+        setExpenses(mapped);
+      }
+    } catch (err) {
+      console.error('Failed to load expenses', err);
     }
-    return [
-      { id: 1, amount: 1200, date: '2026-01-01' },
-      { id: 2, amount: 50, date: '2026-01-01' },
-      { id: 3, amount: 300, date: '2026-01-05' },
-      { id: 4, amount: 150, date: '2026-01-03' },
-      { id: 5, amount: 80, date: '2026-01-04' }
-    ];
-  });
+  };
 
-  // Sample saving plans (replace with actual data from backend)
-  const [savingPlans, setSavingPlans] = useState([
-    { id: 1, category: 'Emergency Fund', amount: 500, month: 1, year: 2026 },
-    { id: 2, category: 'Travel Fund', amount: 300, month: 1, year: 2026 }
-  ]);
-
-  // Reload data when component mounts or user returns to page
   useEffect(() => {
-    const handleFocus = () => {
-      const savedIncomes = localStorage.getItem('det-all-incomes');
-      if (savedIncomes) setIncomes(JSON.parse(savedIncomes));
-      const savedExpenses = localStorage.getItem('det-all-expenses');
-      if (savedExpenses) setExpenses(JSON.parse(savedExpenses));
-    };
-    window.addEventListener('focus', handleFocus);
-    return () => window.removeEventListener('focus', handleFocus);
+    fetchIncomes();
+    fetchExpenses();
+    const onFocus = () => { fetchIncomes(); fetchExpenses(); };
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const sources = [
@@ -84,32 +101,37 @@ const AddIncome = () => {
     'Other'
   ];
 
-
-
-  const handleDeleteIncomes = (incomeIds) => {
-    // Remove from det-all-incomes
-    const updatedIncomes = incomes.filter(i => !incomeIds.has(i.id));
-    setIncomes(updatedIncomes);
-    localStorage.setItem('det-all-incomes', JSON.stringify(updatedIncomes));
-    
-    // Also remove from dashboard recent expenses (income type)
-    const dashboardExpenses = JSON.parse(localStorage.getItem('det-expenses') || '[]');
-    const updatedDashboard = dashboardExpenses.filter(e => !incomeIds.has(e.id));
-    localStorage.setItem('det-expenses', JSON.stringify(updatedDashboard));
-    
-    // Clear selections and close edit mode
-    setSelectedForDeleteIncomes(new Set());
-    setEditModeIncomeHistory(false);
+  const handleDeleteIncomes = async (incomeIds) => {
+    if (!token) return;
+    try {
+      await Promise.all(
+        Array.from(incomeIds).map(id =>
+          fetch(`${API_BASE_URL}/incomes/${id}?token=${token}`, { method: 'DELETE' })
+        )
+      );
+      await fetchIncomes();
+    } catch (err) {
+      console.error('Failed to delete incomes', err);
+    } finally {
+      setSelectedForDeleteIncomes(new Set());
+      setEditModeIncomeHistory(false);
+    }
   };
 
-  const handleDeletePlans = (planIds) => {
-    // Remove from savingPlans
-    const updatedPlans = savingPlans.filter(p => !planIds.has(p.id));
-    setSavingPlans(updatedPlans);
-    
-    // Clear selections and close edit mode
-    setSelectedForDeletePlans(new Set());
-    setEditModeSavingPlans(false);
+  const handleDeletePlans = async (planIds) => {
+    if (!token) return;
+    try {
+      await Promise.all(
+        Array.from(planIds).map(id => fetch(`${API_BASE_URL}/plans/${id}?token=${token}`, { method: 'DELETE' }))
+      );
+      await fetchSavingPlans(selectedMonth, selectedYear);
+      await fetchSavingPlanSummary(selectedMonth, selectedYear);
+    } catch (err) {
+      console.error('Failed to delete saving plans', err);
+    } finally {
+      setSelectedForDeletePlans(new Set());
+      setEditModeSavingPlans(false);
+    }
   };
 
   const toggleSelectIncome = (id) => {
@@ -144,75 +166,67 @@ const AddIncome = () => {
     'Other'
   ];
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
+    if (!token) return;
     if (source && amount && date) {
-      const newIncome = {
-        id: Math.max(...incomes.map(i => i.id), 0) + 1,
-        source,
-        amount: parseFloat(amount),
-        date,
-        notes
-      };
-      
-      const updatedIncomes = [newIncome, ...incomes];
-      setIncomes(updatedIncomes);
-      localStorage.setItem('det-all-incomes', JSON.stringify(updatedIncomes));
-      
-      // Also update dashboard recent expenses (income type)
-      const dashboardExpenses = JSON.parse(localStorage.getItem('det-expenses') || '[]');
-      const dashboardIncome = {
-        id: Math.max(...dashboardExpenses.map(e => e.id), 0) + 1,
-        category: source,
-        amount: parseFloat(amount),
-        date,
-        notes,
-        type: 'income'
-      };
-      const updatedDashboard = [...dashboardExpenses, dashboardIncome].sort((a, b) => {
-        const diff = new Date(b.date) - new Date(a.date);
-        if (diff !== 0) return diff;
-        return b.id - a.id;
-      });
-      localStorage.setItem('det-expenses', JSON.stringify(updatedDashboard));
-      
-      // Reload expenses from localStorage to update monthly summary
-      const latestExpenses = JSON.parse(localStorage.getItem('det-all-expenses') || '[]');
-      setExpenses(latestExpenses);
-      
-      setSubmitted(true);
-      
-      setTimeout(() => {
-        setSource('');
-        setAmount('');
-        setDate('');
-        setNotes('');
-        setSubmitted(false);
-      }, 2000);
+      try {
+        const res = await fetch(`${API_BASE_URL}/incomes/?token=${token}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            source,
+            amount: parseFloat(amount),
+            income_date: date,
+            notes
+          })
+        });
+        if (res.ok) {
+          await fetchIncomes();
+          await fetchExpenses();
+          setSubmitted(true);
+          setTimeout(() => {
+            setSource('');
+            setAmount('');
+            setDate('');
+            setNotes('');
+            setSubmitted(false);
+          }, 2000);
+        }
+      } catch (err) {
+        console.error('Error submitting income:', err);
+      }
     }
   };
 
-  const handleSavingPlanSubmit = (e) => {
+  const handleSavingPlanSubmit = async (e) => {
     e.preventDefault();
-    
+    if (!token) return;
     if (savingPlanCategory && savingPlanAmount) {
-      const newPlan = {
-        id: Math.max(...savingPlans.map(p => p.id), 0) + 1,
-        category: savingPlanCategory,
-        amount: parseFloat(savingPlanAmount),
-        month: parseInt(selectedMonth),
-        year: parseInt(selectedYear)
-      };
-      
-      setSavingPlans([newPlan, ...savingPlans]);
-      setPlanSubmitted(true);
-      
-      setTimeout(() => {
-        setSavingPlanCategory('');
-        setSavingPlanAmount('');
-        setPlanSubmitted(false);
-      }, 2000);
+      try {
+        const res = await fetch(`${API_BASE_URL}/plans/?token=${token}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            category: savingPlanCategory,
+            amount: parseFloat(savingPlanAmount),
+            month: parseInt(selectedMonth),
+            year: parseInt(selectedYear)
+          })
+        });
+        if (res.ok) {
+          await fetchSavingPlans(selectedMonth, selectedYear);
+          await fetchSavingPlanSummary(selectedMonth, selectedYear);
+          setPlanSubmitted(true);
+          setTimeout(() => {
+            setSavingPlanCategory('');
+            setSavingPlanAmount('');
+            setPlanSubmitted(false);
+          }, 2000);
+        }
+      } catch (err) {
+        console.error('Failed to create saving plan', err);
+      }
     }
   };
 
@@ -244,8 +258,49 @@ const AddIncome = () => {
   const yearlyIncomes = incomes.filter(i => new Date(i.date).getFullYear() === parseInt(selectedYear));
   const yearlyIncome = yearlyIncomes.reduce((sum, i) => sum + i.amount, 0);
 
-  const totalPlannedAmount = filteredPlans.reduce((sum, p) => sum + p.amount, 0);
-  const remainingSavings = monthlySavings - totalPlannedAmount;
+  const computedPlanned = filteredPlans.reduce((sum, p) => sum + p.amount, 0);
+  const effectivePlanned = plannedTotal || computedPlanned;
+  const remainingSavings = monthlySavings - effectivePlanned;
+
+  // Fetch saving plans for current user (we can fetch all and filter client-side)
+  const fetchSavingPlans = async (m = selectedMonth, y = selectedYear) => {
+    try {
+      if (!token) return;
+      const res = await fetch(`${API_BASE_URL}/plans/?token=${token}&month=${m}&year=${y}`);
+      if (res.ok) {
+        const data = await res.json();
+        setSavingPlans(data);
+      }
+    } catch (err) {
+      console.error('Failed to load saving plans', err);
+    }
+  };
+
+  const fetchSavingPlanSummary = async (m = selectedMonth, y = selectedYear) => {
+    try {
+      if (!token) return;
+      const res = await fetch(`${API_BASE_URL}/plans/summary?token=${token}&month=${m}&year=${y}`);
+      if (res.ok) {
+        const data = await res.json();
+        setPlannedTotal(data.total_planned);
+        setPlannedCount(data.count);
+      } else {
+        // Reset if summary fails
+        setPlannedTotal(0);
+        setPlannedCount(0);
+      }
+    } catch (err) {
+      console.error('Failed to load saving plan summary', err);
+      setPlannedTotal(0);
+      setPlannedCount(0);
+    }
+  };
+
+  useEffect(() => {
+    fetchSavingPlans(selectedMonth, selectedYear);
+    fetchSavingPlanSummary(selectedMonth, selectedYear);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedMonth, selectedYear]);
 
   return (
     <>
@@ -275,7 +330,7 @@ const AddIncome = () => {
                 Income (This Month)
               </h3>
               <p style={{ color: '#2f2b28', fontSize: '2rem', fontWeight: 'bold', margin: 0 }}>
-                ${monthlyIncome.toFixed(2)}
+                {formatMoney(monthlyIncome, currency)}
               </p>
             </div>
             <div style={{
@@ -289,7 +344,7 @@ const AddIncome = () => {
                 Income (This Year)
               </h3>
               <p style={{ color: '#2f2b28', fontSize: '2rem', fontWeight: 'bold', margin: 0 }}>
-                ${yearlyIncome.toFixed(2)}
+                {formatMoney(yearlyIncome, currency)}
               </p>
             </div>
           </div>
@@ -585,7 +640,7 @@ const AddIncome = () => {
                     Total Income
                   </p>
                   <p style={{ color: '#2e7d32', fontSize: '1.8rem', fontWeight: 'bold', margin: 0 }}>
-                    ${monthlyIncome.toFixed(2)}
+                    {formatMoney(monthlyIncome, currency)}
                   </p>
                 </div>
 
@@ -599,7 +654,7 @@ const AddIncome = () => {
                     Total Expenses
                   </p>
                   <p style={{ color: '#c62828', fontSize: '1.8rem', fontWeight: 'bold', margin: 0 }}>
-                    ${monthlyExpenses.toFixed(2)}
+                    {formatMoney(monthlyExpenses, currency)}
                   </p>
                 </div>
 
@@ -618,7 +673,7 @@ const AddIncome = () => {
                     fontWeight: 'bold', 
                     margin: 0 
                   }}>
-                    ${monthlySavings.toFixed(2)}
+                    {formatMoney(monthlySavings, currency)}
                   </p>
                 </div>
               </div>
@@ -829,7 +884,7 @@ const AddIncome = () => {
                           {plan.category}
                         </p>
                         <p style={{ color: '#f6b7a0', fontSize: '1rem', fontWeight: 'bold', margin: 0 }}>
-                          ${plan.amount.toFixed(2)}
+                          {formatMoney(plan.amount, currency)}
                         </p>
                       </div>
                     ))
@@ -882,7 +937,7 @@ const AddIncome = () => {
                       Total Planned:
                     </p>
                     <p style={{ color: '#2f2b28', fontSize: '0.9rem', fontWeight: 'bold', margin: 0 }}>
-                      ${totalPlannedAmount.toFixed(2)}
+                      {formatMoney(effectivePlanned, currency)}
                     </p>
                   </div>
                   <div style={{
@@ -900,7 +955,7 @@ const AddIncome = () => {
                       fontWeight: 'bold', 
                       margin: 0 
                     }}>
-                      ${remainingSavings.toFixed(2)}
+                      {formatMoney(remainingSavings, currency)}
                     </p>
                   </div>
                 </div>
@@ -1105,7 +1160,7 @@ const AddIncome = () => {
                       fontWeight: 'bold',
                       margin: 0
                     }}>
-                      +${income.amount.toFixed(2)}
+                      +{formatMoney(income.amount, currency)}
                     </p>
                   </div>
                 ))

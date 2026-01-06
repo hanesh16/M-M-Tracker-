@@ -1,48 +1,86 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useCurrency } from '../context/CurrencyContext';
 import NavHeader from '../components/NavHeader';
 import Footer2 from '../components/footer2';
 
 const Settings = () => {
   const navigate = useNavigate();
+  const { currency: contextCurrency, setCurrency: setContextCurrency } = useCurrency();
   const [notifications, setNotifications] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
   const [currency, setCurrency] = useState('USD');
   const [savedMessage, setSavedMessage] = useState(false);
+  const [clearDataLoading, setClearDataLoading] = useState(false);
+  const API_BASE_URL = 'http://localhost:8000';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('det-token') : null;
 
   useEffect(() => {
+    // Load UI-only settings from localStorage
     const storedSettings = JSON.parse(localStorage.getItem('det-settings') || '{}');
-    const storedUser = JSON.parse(localStorage.getItem('det-user') || '{}');
-    const preferredCurrency = storedSettings.currency
-      || (storedUser.category === 'Milky' ? 'INR' : 'USD');
+    if (typeof storedSettings.notifications === 'boolean') setNotifications(storedSettings.notifications);
+    if (typeof storedSettings.darkMode === 'boolean') setDarkMode(storedSettings.darkMode);
 
-    if (typeof storedSettings.notifications === 'boolean') {
-      setNotifications(storedSettings.notifications);
-    }
-    if (typeof storedSettings.darkMode === 'boolean') {
-      setDarkMode(storedSettings.darkMode);
-    }
-    setCurrency(preferredCurrency);
-  }, []);
+    // Load currency from context (already loaded on app start)
+    setCurrency(contextCurrency);
+  }, [contextCurrency]);
 
-  const handleSaveSettings = () => {
-    // Save settings to localStorage
-    const settings = {
-      notifications,
-      darkMode,
-      currency
-    };
-    localStorage.setItem('det-settings', JSON.stringify(settings));
-    setSavedMessage(true);
-    setTimeout(() => setSavedMessage(false), 3000);
+  const handleSaveSettings = async () => {
+    // Save UI-only settings locally
+    const uiSettings = { notifications, darkMode };
+    localStorage.setItem('det-settings', JSON.stringify(uiSettings));
+
+    // Persist currency to backend
+    try {
+      if (!token) return;
+      const res = await fetch(`${API_BASE_URL}/settings/?token=${token}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currency, usd_to_inr_rate: 83.0 })
+      });
+      
+      if (res.ok) {
+        // Update context with new currency
+        setContextCurrency(currency);
+        
+        // Refresh dashboard and data by reloading page
+        // This ensures all components re-fetch data in new currency
+        setTimeout(() => {
+          window.location.href = '/dashboard';
+        }, 500);
+      }
+    } catch (err) {
+      console.warn('Settings save (backend) failed.', err);
+    } finally {
+      setSavedMessage(true);
+      setTimeout(() => setSavedMessage(false), 3000);
+    }
   };
 
-  const handleClearData = () => {
-    if (window.confirm('Are you sure you want to clear all expense and income data? This cannot be undone.')) {
-      localStorage.removeItem('det-expenses');
-      localStorage.removeItem('det-all-expenses');
-      localStorage.removeItem('det-all-incomes');
-      alert('All data has been cleared successfully!');
+  const handleClearData = async () => {
+    if (window.confirm('Are you sure you want to clear all expense, income, and saving plan data? This cannot be undone.')) {
+      setClearDataLoading(true);
+      try {
+        if (!token) {
+          alert('Not authenticated');
+          return;
+        }
+        const res = await fetch(`${API_BASE_URL}/auth/data?token=${token}`, {
+          method: 'DELETE'
+        });
+        if (res.ok) {
+          alert('All user data has been cleared successfully!');
+          // Refresh dashboard
+          window.location.href = '/dashboard';
+        } else {
+          alert('Failed to clear data. Please try again.');
+        }
+      } catch (err) {
+        console.error('Clear data error:', err);
+        alert('Error clearing data. Please try again.');
+      } finally {
+        setClearDataLoading(false);
+      }
     }
   };
 

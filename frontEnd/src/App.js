@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { CurrencyProvider } from './context/CurrencyContext';
 import LandingPage from './pages/LandingPage';
 import SignupPage from './pages/SignupPage';
 import LoginPage from './pages/LoginPage';
@@ -31,8 +32,9 @@ const App = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-cream text-slate-800">
-      <Routes>
+    <CurrencyProvider>
+      <div className="min-h-screen bg-cream text-slate-800">
+        <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
@@ -61,8 +63,9 @@ const App = () => {
           element={isLoggedIn() ? <Settings /> : <Navigate to="/login" replace />}
         />
         <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </div>
+        </Routes>
+      </div>
+    </CurrencyProvider>
   );
 };
 

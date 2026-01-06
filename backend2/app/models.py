@@ -16,6 +16,7 @@ class User(Base):
     verification_token = Column(String, nullable=True)
     verification_token_expiry = Column(DateTime, nullable=True)
     profile_picture = Column(String, nullable=True)  # Base64 or file path
+    default_avatar = Column(String, nullable=True)  # pic3 for Milky, pic4 for Mocha
     created_at = Column(DateTime, default=datetime.utcnow)
     
     expenses = relationship("Expense", back_populates="owner")
@@ -59,3 +60,15 @@ class Settings(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     
     owner = relationship("User", back_populates="settings")
+
+class SavingPlan(Base):
+    __tablename__ = "saving_plans"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    category = Column(String)
+    amount = Column(Float)
+    month = Column(Integer)  # 1-12
+    year = Column(Integer)
+    created_at = Column(DateTime, default=datetime.utcnow)
+

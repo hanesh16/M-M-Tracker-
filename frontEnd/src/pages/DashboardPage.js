@@ -1,13 +1,17 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useCurrency } from '../context/CurrencyContext';
+import { formatMoney } from '../utils/currencyUtils';
 import NavHeader from '../components/NavHeader';
 import Footer2 from '../components/footer2';
 
 const API_BASE_URL = 'http://localhost:8000';
 
 const DashboardPage = () => {
+  const { currency } = useCurrency();
   const [userName, setUserName] = useState('');
   const token = localStorage.getItem('det-token');
   const [selectedDay, setSelectedDay] = useState('');
+
   const [selectedMonth, setSelectedMonth] = useState('');
   const [selectedYear, setSelectedYear] = useState('');
   const [expenseIdOrder, setExpenseIdOrder] = useState([]);
@@ -365,7 +369,7 @@ const DashboardPage = () => {
                     margin: '0',
                     marginBottom: '5px'
                   }}>
-                    ${card.value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    {formatMoney(card.value, currency)}
                   </p>
                   <p style={{
                     color: '#9b8f84',
@@ -613,7 +617,7 @@ const DashboardPage = () => {
                             fontWeight: '600',
                             margin: '0 0 5px 0'
                           }}>
-                            {expense.category}
+                            {expense.title}
                           </p>
                           <p style={{
                             color: '#9b8f84',
@@ -634,7 +638,7 @@ const DashboardPage = () => {
                             fontWeight: 'bold',
                             margin: '0'
                           }}>
-                            {expense.type === 'income' ? '+' : '-'}${expense.amount.toFixed(2)}
+                            {expense.type === 'income' ? '+' : '-'}{formatMoney(expense.amount, expense.currency || currency)}
                           </p>
                           {expense.type === 'income' && (
                             <img 

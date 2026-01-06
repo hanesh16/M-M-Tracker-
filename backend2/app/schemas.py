@@ -16,6 +16,7 @@ class UserResponse(UserBase):
     id: int
     is_verified: bool
     profile_picture: Optional[str] = None
+    default_avatar: Optional[str] = None
     created_at: datetime
     
     class Config:
@@ -24,6 +25,10 @@ class UserResponse(UserBase):
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
+
+class UserUpdate(BaseModel):
+    name: Optional[str] = None
+    profile_picture: Optional[str] = None
 
 # Expense schemas
 class ExpenseBase(BaseModel):
@@ -40,6 +45,7 @@ class ExpenseResponse(ExpenseBase):
     id: int
     user_id: int
     created_at: datetime
+    currency: str = "USD"
     
     class Config:
         from_attributes = True
@@ -58,6 +64,7 @@ class IncomeResponse(IncomeBase):
     id: int
     user_id: int
     created_at: datetime
+    currency: str = "USD"
     
     class Config:
         from_attributes = True
@@ -82,15 +89,16 @@ class DashboardSummary(BaseModel):
     totalIncome: float
     totalExpense: float
     savings: float
+    currency: str = "USD"
 
 class RecentActivity(BaseModel):
     id: int
-    category: str
-    source: Optional[str] = None
+    type: str  # expense or income
+    title: str  # category for expense, source for income
     amount: float
     date: date
-    type: str
     notes: Optional[str] = None
+    currency: str = "USD"
 
 # Token schemas
 class Token(BaseModel):
@@ -99,3 +107,27 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     email: Optional[str] = None
+
+# Saving Plan schemas
+class SavingPlanBase(BaseModel):
+    category: str
+    amount: float
+    month: int
+    year: int
+
+class SavingPlanCreate(SavingPlanBase):
+    pass
+
+class SavingPlanResponse(SavingPlanBase):
+    id: int
+    user_id: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class SavingPlanSummary(BaseModel):
+    month: int
+    year: int
+    total_planned: float
+    count: int

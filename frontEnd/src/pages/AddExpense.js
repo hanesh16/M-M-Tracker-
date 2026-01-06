@@ -1,8 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import NavHeader from '../components/NavHeader';
 import Footer2 from '../components/footer2';
+import { useCurrency } from '../context/CurrencyContext';
+import { formatMoney } from '../utils/currencyUtils';
 
 const AddExpense = () => {
+  const API_BASE_URL = 'http://localhost:8000';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('det-token') : null;
+  const { currency } = useCurrency();
   // Form states
   const [category, setCategory] = useState('');
   const [amount, setAmount] = useState('');
@@ -22,29 +27,38 @@ const AddExpense = () => {
   const [selectedForDeleteRegular, setSelectedForDeleteRegular] = useState(new Set());
   const [selectedForDeleteAdditional, setSelectedForDeleteAdditional] = useState(new Set());
 
-  // Load expense data from localStorage
-  const [expenses, setExpenses] = useState(() => {
-    const saved = localStorage.getItem('det-all-expenses');
-    if (saved) {
-      return JSON.parse(saved);
-    }
-    return [
-      { id: 1, category: 'Rent', amount: 1200, date: '2026-01-01', type: 'regular', notes: 'Monthly rent' },
-      { id: 2, category: 'Internet', amount: 50, date: '2026-01-01', type: 'regular', notes: 'WiFi bill' },
-      { id: 3, category: 'Groceries', amount: 300, date: '2026-01-05', type: 'regular', notes: 'Weekly groceries' },
-      { id: 4, category: 'Shopping', amount: 150, date: '2026-01-03', type: 'additional', notes: 'New clothes' },
-      { id: 5, category: 'Entertainment', amount: 80, date: '2026-01-04', type: 'additional', notes: 'Movie night' }
-    ];
-  });
+  // Expense data from backend
+  const [expenses, setExpenses] = useState([]);
 
-  // Reload data when component mounts or user returns to page
+  const fetchExpenses = async () => {
+    try {
+      if (!token) return;
+      const res = await fetch(`${API_BASE_URL}/expenses/?token=${token}`);
+      if (res.ok) {
+        const data = await res.json();
+        // Normalize to match existing UI expectations
+        const mapped = data.map(e => ({
+          id: e.id,
+          category: e.category,
+          amount: e.amount,
+          date: e.expense_date,
+          type: e.expense_type || 'additional',
+          notes: e.notes || ''
+        }));
+        setExpenses(mapped);
+      }
+    } catch (err) {
+      console.error('Failed to load expenses', err);
+    }
+  };
+
+  // Load from backend on mount and when window regains focus
   useEffect(() => {
-    const handleFocus = () => {
-      const savedExpenses = localStorage.getItem('det-all-expenses');
-      if (savedExpenses) setExpenses(JSON.parse(savedExpenses));
-    };
+    fetchExpenses();
+    const handleFocus = () => fetchExpenses();
     window.addEventListener('focus', handleFocus);
     return () => window.removeEventListener('focus', handleFocus);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const categories = [
@@ -52,24 +66,24 @@ const AddExpense = () => {
     'Shopping', 'Health', 'Education', 'Utilities', 'Dining', 'Other'
   ];
 
-
-
-  const handleDeleteExpenses = (expenseIds) => {
-    // Remove from det-all-expenses
-    const updatedExpenses = expenses.filter(e => !expenseIds.has(e.id));
-    setExpenses(updatedExpenses);
-    localStorage.setItem('det-all-expenses', JSON.stringify(updatedExpenses));
-    
-    // Also remove from dashboard recent expenses
-    const dashboardExpenses = JSON.parse(localStorage.getItem('det-expenses') || '[]');
-    const updatedDashboard = dashboardExpenses.filter(e => !expenseIds.has(e.id));
-    localStorage.setItem('det-expenses', JSON.stringify(updatedDashboard));
-    
-    // Clear selections and close edit mode
-    setSelectedForDeleteRegular(new Set());
-    setSelectedForDeleteAdditional(new Set());
-    setEditModeRegular(false);
-    setEditModeAdditional(false);
+  const handleDeleteExpenses = async (expenseIds) => {
+    if (!token) return;
+    try {
+      // Delete each selected expense on backend
+      await Promise.all(
+        Array.from(expenseIds).map(id =>
+          fetch(`${API_BASE_URL}/expenses/${id}?token=${token}`, { method: 'DELETE' })
+        )
+      );
+      await fetchExpenses();
+    } catch (err) {
+      console.error('Failed to delete expenses', err);
+    } finally {
+      setSelectedForDeleteRegular(new Set());
+      setSelectedForDeleteAdditional(new Set());
+      setEditModeRegular(false);
+      setEditModeAdditional(false);
+    }
   };
 
   const toggleSelectRegular = (id) => {
@@ -92,49 +106,36 @@ const AddExpense = () => {
     setSelectedForDeleteAdditional(newSelected);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
+    if (!token) return;
     if (category && amount && date) {
-      const newExpense = {
-        id: Math.max(...expenses.map(e => e.id), 0) + 1,
-        category,
-        amount: parseFloat(amount),
-        date,
-        type: expenseType,
-        notes
-      };
-      
-      const updatedExpenses = [newExpense, ...expenses];
-      setExpenses(updatedExpenses);
-      localStorage.setItem('det-all-expenses', JSON.stringify(updatedExpenses));
-      
-      // Also update dashboard recent expenses
-      const dashboardExpenses = JSON.parse(localStorage.getItem('det-expenses') || '[]');
-      const dashboardExpense = {
-        id: Math.max(...dashboardExpenses.map(e => e.id), 0) + 1,
-        category,
-        amount: parseFloat(amount),
-        date,
-        notes,
-        type: 'expense'
-      };
-      const updatedDashboard = [...dashboardExpenses, dashboardExpense].sort((a, b) => {
-        const diff = new Date(b.date) - new Date(a.date);
-        if (diff !== 0) return diff;
-        return b.id - a.id;
-      });
-      localStorage.setItem('det-expenses', JSON.stringify(updatedDashboard));
-      
-      setSubmitted(true);
-      
-      setTimeout(() => {
-        setCategory('');
-        setAmount('');
-        setDate('');
-        setNotes('');
-        setSubmitted(false);
-      }, 2000);
+      try {
+        const res = await fetch(`${API_BASE_URL}/expenses/?token=${token}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            category,
+            amount: parseFloat(amount),
+            expense_date: date,
+            notes,
+            expense_type: expenseType
+          })
+        });
+        if (res.ok) {
+          await fetchExpenses();
+          setSubmitted(true);
+          setTimeout(() => {
+            setCategory('');
+            setAmount('');
+            setDate('');
+            setNotes('');
+            setSubmitted(false);
+          }, 2000);
+        }
+      } catch (err) {
+        console.error('Error submitting expense:', err);
+      }
     }
   };
 
@@ -205,7 +206,7 @@ const AddExpense = () => {
                 This Month
               </h3>
               <p style={{ color: '#2f2b28', fontSize: '2rem', fontWeight: 'bold', margin: 0 }}>
-                ${monthlyTotal.toFixed(2)}
+                {formatMoney(monthlyTotal, currency)}
               </p>
             </div>
             <div style={{
@@ -219,7 +220,7 @@ const AddExpense = () => {
                 This Year
               </h3>
               <p style={{ color: '#2f2b28', fontSize: '2rem', fontWeight: 'bold', margin: 0 }}>
-                ${yearlyTotal.toFixed(2)}
+                {formatMoney(yearlyTotal, currency)}
               </p>
             </div>
             <div style={{
@@ -233,7 +234,7 @@ const AddExpense = () => {
                 All Time
               </h3>
               <p style={{ color: '#2f2b28', fontSize: '2rem', fontWeight: 'bold', margin: 0 }}>
-                ${allTimeTotal.toFixed(2)}
+                {formatMoney(allTimeTotal, currency)}
               </p>
             </div>
           </div>
@@ -568,7 +569,7 @@ const AddExpense = () => {
                           </p>
                         </div>
                         <p style={{ color: '#DAA06D', fontSize: '1.1rem', fontWeight: 'bold', margin: 0 }}>
-                          ${expense.amount.toFixed(2)}
+                          {formatMoney(expense.amount, currency)}
                         </p>
                       </div>
                     ))
@@ -614,7 +615,7 @@ const AddExpense = () => {
                     Regular Total:
                   </p>
                   <p style={{ color: '#DAA06D', fontSize: '1.2rem', fontWeight: 'bold', margin: 0 }}>
-                    ${regularTotal.toFixed(2)}
+                    {formatMoney(regularTotal, currency)}
                   </p>
                 </div>
               </div>
@@ -703,7 +704,7 @@ const AddExpense = () => {
                           </p>
                         </div>
                         <p style={{ color: '#f6b7a0', fontSize: '1.1rem', fontWeight: 'bold', margin: 0 }}>
-                          ${expense.amount.toFixed(2)}
+                          {formatMoney(expense.amount, currency)}
                         </p>
                       </div>
                     ))
@@ -749,7 +750,7 @@ const AddExpense = () => {
                     Additional Total:
                   </p>
                   <p style={{ color: '#f6b7a0', fontSize: '1.2rem', fontWeight: 'bold', margin: 0 }}>
-                    ${additionalTotal.toFixed(2)}
+                    {formatMoney(additionalTotal, currency)}
                   </p>
                 </div>
               </div>
@@ -918,7 +919,7 @@ const AddExpense = () => {
                       fontWeight: 'bold',
                       margin: 0
                     }}>
-                      ${expense.amount.toFixed(2)}
+                      {formatMoney(expense.amount, currency)}
                     </p>
                   </div>
                 ))

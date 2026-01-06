@@ -2,14 +2,19 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import NavHeader from '../components/NavHeader';
 import Footer2 from '../components/footer2';
+import pic3 from '../images/pic3.png';
+import pic4 from '../images/pic4.png';
 
 const Profile = () => {
   const navigate = useNavigate();
+  const API_BASE_URL = 'http://localhost:8000';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('det-token') : null;
   const [userData, setUserData] = useState({
     name: '',
     email: '',
     joinDate: '',
-    profileImage: ''
+    profileImage: '',
+    defaultAvatar: null
   });
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState('');
@@ -17,30 +22,51 @@ const Profile = () => {
   const fileInputRef = useRef(null);
 
   useEffect(() => {
-    const user = localStorage.getItem('det-user');
-    if (user) {
-      const parsed = JSON.parse(user);
-      setUserData({
-        name: parsed.name || 'User',
-        email: parsed.email || 'user@example.com',
-        joinDate: parsed.joinDate || '2026-01-01',
-        profileImage: parsed.profileImage || ''
-      });
-      setEditedName(parsed.name || 'User');
-    }
+    const loadUser = async () => {
+      try {
+        if (!token) return;
+        const res = await fetch(`${API_BASE_URL}/auth/me?token=${token}`);
+        if (res.ok) {
+          const user = await res.json();
+          const defaultAvatarImage = user.default_avatar === 'pic3' ? pic3 : (user.default_avatar === 'pic4' ? pic4 : null);
+          setUserData(prev => ({
+            ...prev,
+            name: user.name || 'User',
+            email: user.email || 'user@example.com',
+            joinDate: user.created_at || new Date().toISOString(),
+            profileImage: user.profile_picture || null,
+            defaultAvatar: defaultAvatarImage
+          }));
+          setEditedName(user.name || 'User');
+        }
+      } catch (err) {
+        console.error('Failed to load user profile', err);
+      }
+    };
+    loadUser();
   }, []);
 
 
 
-  const handleSave = () => {
-    const user = JSON.parse(localStorage.getItem('det-user') || '{}');
-    user.name = editedName;
-    user.profileImage = userData.profileImage;
-    localStorage.setItem('det-user', JSON.stringify(user));
-    setUserData({ ...userData, name: editedName });
-    setIsEditing(false);
-    setSavedMessage(true);
-    setTimeout(() => setSavedMessage(false), 3000);
+  const handleSave = async () => {
+    try {
+      if (!token) return;
+      const res = await fetch(`${API_BASE_URL}/auth/me?token=${token}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: editedName, profile_picture: userData.profileImage || null })
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setUserData(prev => ({ ...prev, name: updated.name }));
+      }
+    } catch (err) {
+      console.error('Failed to update profile', err);
+    } finally {
+      setIsEditing(false);
+      setSavedMessage(true);
+      setTimeout(() => setSavedMessage(false), 3000);
+    }
   };
 
   const handleCancel = () => {
@@ -58,16 +84,7 @@ const Profile = () => {
     const reader = new FileReader();
     reader.onload = () => {
       const base64 = reader.result;
-      setUserData((prev) => {
-        const updated = { ...prev, profileImage: base64 };
-        const stored = JSON.parse(localStorage.getItem('det-user') || '{}');
-        stored.profileImage = base64;
-        stored.name = stored.name || prev.name;
-        stored.email = stored.email || prev.email;
-        stored.joinDate = stored.joinDate || prev.joinDate;
-        localStorage.setItem('det-user', JSON.stringify(stored));
-        return updated;
-      });
+      setUserData((prev) => ({ ...prev, profileImage: base64 }));
     };
     reader.readAsDataURL(file);
   };
@@ -143,6 +160,12 @@ const Profile = () => {
                   <img
                     src={userData.profileImage}
                     alt="Profile"
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                ) : userData.defaultAvatar ? (
+                  <img
+                    src={userData.defaultAvatar}
+                    alt="Default Avatar"
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   />
                 ) : (
