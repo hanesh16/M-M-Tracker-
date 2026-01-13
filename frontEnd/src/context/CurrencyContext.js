@@ -4,6 +4,7 @@ const CurrencyContext = createContext();
 
 export const CurrencyProvider = ({ children }) => {
   const [currency, setCurrency] = useState('USD');
+  const [exchangeRate, setExchangeRate] = useState(81.0);
   const API_BASE_URL = 'http://localhost:8000';
 
   // Load currency from backend on mount
@@ -19,6 +20,9 @@ export const CurrencyProvider = ({ children }) => {
           if (data && data.currency) {
             setCurrency(data.currency);
           }
+          if (data && data.usd_to_inr_rate) {
+            setExchangeRate(data.usd_to_inr_rate);
+          }
         }
       } catch (err) {
         console.warn('Failed to load currency setting', err);
@@ -29,7 +33,7 @@ export const CurrencyProvider = ({ children }) => {
   }, []);
 
   return (
-    <CurrencyContext.Provider value={{ currency, setCurrency }}>
+    <CurrencyContext.Provider value={{ currency, setCurrency, exchangeRate, setExchangeRate }}>
       {children}
     </CurrencyContext.Provider>
   );

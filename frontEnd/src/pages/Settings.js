@@ -36,7 +36,7 @@ const Settings = () => {
       const res = await fetch(`${API_BASE_URL}/settings/?token=${token}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ currency, usd_to_inr_rate: 83.0 })
+        body: JSON.stringify({ currency, usd_to_inr_rate: 81.0 })
       });
       
       if (res.ok) {
@@ -278,8 +278,6 @@ const Settings = () => {
                   boxSizing: 'border-box'
                 }}>
                 <option value="USD">USD - US Dollar ($)</option>
-                <option value="EUR">EUR - Euro (€)</option>
-                <option value="GBP">GBP - British Pound (£)</option>
                 <option value="INR">INR - Indian Rupee (₹)</option>
               </select>
             </div>

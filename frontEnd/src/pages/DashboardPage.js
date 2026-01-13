@@ -193,12 +193,12 @@ const DashboardPage = () => {
     }
   }, [token, fetchRecentActivity]);
 
-  // Reload recent activity when filters change
+  // Reload recent activity when filters change or currency changes
   useEffect(() => {
     if (token && !loading) {
       fetchRecentActivity();
     }
-  }, [selectedMonth, selectedYear, token, loading, fetchRecentActivity]);
+  }, [selectedMonth, selectedYear, token, loading, fetchRecentActivity, currency]);
 
   // Initialize expense order
   useEffect(() => {
@@ -249,7 +249,7 @@ const DashboardPage = () => {
   }, [isHovering]);
 
   const filteredTotalExpenses = filteredExpenses.filter(e => e.type === 'expense').reduce((sum, expense) => sum + expense.amount, 0);
-  const filteredTotalIncome = 2400 + filteredExpenses.filter(e => e.type === 'income').reduce((sum, income) => sum + income.amount, 0);
+  const filteredTotalIncome = filteredExpenses.filter(e => e.type === 'income').reduce((sum, income) => sum + income.amount, 0);
   const filteredTotalSavings = filteredTotalIncome - filteredTotalExpenses;
 
   const summaryCards = [
@@ -575,7 +575,7 @@ const DashboardPage = () => {
                   
                   // Get color based on original index in filtered list
                   const originalIndex = sortedFilteredExpenses.findIndex(e => e.id === expenseId);
-                  const softColors = ['#ffeaa7', '#b3e5fc', '#c8e6c9', '#ffccbc', '#d1c4e9', '#fff8dc'];
+                  const softColors = ['#e8d5f2', '#c8e6c9', '#b3e5fc', '#ffccbc', '#fce4ec', '#d5f4e6'];
                   const boxColor = softColors[originalIndex % softColors.length];
                   
                   // Calculate position

@@ -119,7 +119,8 @@ const AddExpense = () => {
             amount: parseFloat(amount),
             expense_date: date,
             notes,
-            expense_type: expenseType
+            expense_type: expenseType,
+            currency: currency
           })
         });
         if (res.ok) {
@@ -370,7 +371,7 @@ const AddExpense = () => {
                     fontWeight: '600',
                     marginBottom: '8px'
                   }}>
-                    Amount ($) *
+                    Amount ({currency === 'INR' ? '₹' : '$'}) *
                   </label>
                   <input
                     type="number"

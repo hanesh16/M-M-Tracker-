@@ -178,7 +178,8 @@ const AddIncome = () => {
             source,
             amount: parseFloat(amount),
             income_date: date,
-            notes
+            notes,
+            currency: currency
           })
         });
         if (res.ok) {
@@ -431,7 +432,7 @@ const AddIncome = () => {
                     fontWeight: '600',
                     marginBottom: '8px'
                   }}>
-                    Amount ($) *
+                    Amount ({currency === 'INR' ? '₹' : '$'}) *
                   </label>
                   <input
                     type="number"
