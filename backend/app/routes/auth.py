@@ -20,11 +20,7 @@ def signup(user_data: UserCreate, db: Session = Depends(get_db)):
     if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
     
-    # Create verification token
-    verification_token = create_verification_token(user_data.email)
-    verification_token_expiry = datetime.utcnow() + timedelta(hours=24)
-    
-    # Create user
+    # Create user (Verified by default)
     hashed_password = get_password_hash(user_data.password)
     default_avatar = "pic3" if user_data.category == "Milky" else "pic4"
     db_user = User(
@@ -33,10 +29,10 @@ def signup(user_data: UserCreate, db: Session = Depends(get_db)):
         phone=user_data.phone,
         password_hash=hashed_password,
         category=user_data.category,
-        verification_token=verification_token,
-        verification_token_expiry=verification_token_expiry,
+        verification_token=None,
+        verification_token_expiry=None,
         default_avatar=default_avatar,
-        is_verified=False
+        is_verified=True
     )
     db.add(db_user)
     db.commit()
@@ -51,11 +47,8 @@ def signup(user_data: UserCreate, db: Session = Depends(get_db)):
     db.add(settings)
     db.commit()
     
-    # Send verification email (with fallback to console)
-    send_verification_email(user_data.email, verification_token)
-    
     return {
-        "message": "User created successfully. Verification email sent.",
+        "message": "User created successfully.",
         "user_id": db_user.id,
         "email": db_user.email
     }
@@ -85,7 +78,10 @@ def login(credentials: UserLogin, db: Session = Depends(get_db)):
         raise HTTPException(status_code=401, detail="Invalid email or password")
     
     if not user.is_verified:
-        raise HTTPException(status_code=403, detail="Email not verified. Check console for verification link.")
+        # Auto-verify legacy users if they try to login
+        user.is_verified = True
+        db.commit()
+        # raise HTTPException(status_code=403, detail="Email not verified. Check console for verification link.")
     
     access_token = create_access_token(data={"sub": user.email})
     return {"access_token": access_token, "token_type": "bearer"}

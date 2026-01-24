@@ -18,6 +18,13 @@ import faviconImg from './images/pic6.png';
 // Simple auth helper using JWT token
 const isLoggedIn = () => localStorage.getItem('det-token') !== null;
 
+const ProtectedRoute = ({ children }) => {
+  if (!isLoggedIn()) {
+    return <Navigate to="/login" replace />;
+  }
+  return children;
+};
+
 const App = () => {
   useEffect(() => {
     const head = document.head;
@@ -35,34 +42,54 @@ const App = () => {
     <CurrencyProvider>
       <div className="min-h-screen bg-cream text-slate-800">
         <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/signup" element={<SignupPage />} />
-        <Route path="/verify-email" element={<VerifyEmail />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/aboutus" element={<AboutUs />} />
-        <Route path="/help" element={<Help />} />
-        <Route path="/privacy" element={<PrivacyPolicy />} />
-        <Route
-          path="/dashboard"
-          element={isLoggedIn() ? <DashboardPage /> : <Navigate to="/login" replace />}
-        />
-        <Route
-          path="/add-expense"
-          element={isLoggedIn() ? <AddExpense /> : <Navigate to="/login" replace />}
-        />
-        <Route
-          path="/add-income"
-          element={isLoggedIn() ? <AddIncome /> : <Navigate to="/login" replace />}
-        />
-        <Route
-          path="/profile"
-          element={isLoggedIn() ? <Profile /> : <Navigate to="/login" replace />}
-        />
-        <Route
-          path="/settings"
-          element={isLoggedIn() ? <Settings /> : <Navigate to="/login" replace />}
-        />
-        <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/signup" element={<SignupPage />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/aboutus" element={<AboutUs />} />
+          <Route path="/help" element={<Help />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <DashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/add-expense"
+            element={
+              <ProtectedRoute>
+                <AddExpense />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/add-income"
+            element={
+              <ProtectedRoute>
+                <AddIncome />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <Settings />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
     </CurrencyProvider>

@@ -5,9 +5,11 @@ import Footer2 from '../components/footer2';
 import pic3 from '../images/pic3.png';
 import pic4 from '../images/pic4.png';
 
+import { API_BASE_URL } from '../utils/api';
+
 const Profile = () => {
   const navigate = useNavigate();
-  const API_BASE_URL = 'http://localhost:8000';
+  // const API_BASE_URL = 'http://localhost:8000'; (Moved to utils)
   const token = typeof window !== 'undefined' ? localStorage.getItem('det-token') : null;
   const [userData, setUserData] = useState({
     name: '',
@@ -44,7 +46,7 @@ const Profile = () => {
       }
     };
     loadUser();
-  }, []);
+  }, [token]);
 
 
 
@@ -99,7 +101,7 @@ const Profile = () => {
         padding: '40px 20px 60px 20px'
       }}>
         <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-          
+
           {/* Page Header */}
           <div style={{ textAlign: 'center', marginBottom: '40px' }}>
             <h1 style={{
@@ -364,10 +366,10 @@ const Profile = () => {
                 fontSize: '1.2rem',
                 margin: 0
               }}>
-                {new Date(userData.joinDate).toLocaleDateString('en-US', { 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric' 
+                {new Date(userData.joinDate).toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
                 })}
               </p>
             </div>

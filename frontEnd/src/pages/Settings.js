@@ -4,6 +4,8 @@ import { useCurrency } from '../context/CurrencyContext';
 import NavHeader from '../components/NavHeader';
 import Footer2 from '../components/footer2';
 
+import { API_BASE_URL } from '../utils/api';
+
 const Settings = () => {
   const navigate = useNavigate();
   const { currency: contextCurrency, setCurrency: setContextCurrency } = useCurrency();
@@ -12,7 +14,7 @@ const Settings = () => {
   const [currency, setCurrency] = useState('USD');
   const [savedMessage, setSavedMessage] = useState(false);
   const [clearDataLoading, setClearDataLoading] = useState(false);
-  const API_BASE_URL = 'http://localhost:8000';
+  // const API_BASE_URL = 'http://localhost:8000'; (Moved to utils)
   const token = typeof window !== 'undefined' ? localStorage.getItem('det-token') : null;
 
   useEffect(() => {
@@ -38,11 +40,11 @@ const Settings = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ currency, usd_to_inr_rate: 81.0 })
       });
-      
+
       if (res.ok) {
         // Update context with new currency
         setContextCurrency(currency);
-        
+
         // Refresh dashboard and data by reloading page
         // This ensures all components re-fetch data in new currency
         setTimeout(() => {
@@ -94,7 +96,7 @@ const Settings = () => {
         padding: '40px 20px 60px 20px'
       }}>
         <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-          
+
           {/* Page Header */}
           <div style={{ textAlign: 'center', marginBottom: '40px' }}>
             <h1 style={{
@@ -337,6 +339,7 @@ const Settings = () => {
             </p>
             <button
               onClick={handleClearData}
+              disabled={clearDataLoading}
               style={{
                 width: '100%',
                 padding: '12px',
@@ -346,16 +349,17 @@ const Settings = () => {
                 borderRadius: '10px',
                 fontSize: '0.95rem',
                 fontWeight: '600',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease'
+                cursor: clearDataLoading ? 'wait' : 'pointer',
+                transition: 'all 0.2s ease',
+                opacity: clearDataLoading ? 0.7 : 1
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = '#ffebee';
+                if (!clearDataLoading) e.currentTarget.style.background = '#ffebee';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = '#fff';
+                if (!clearDataLoading) e.currentTarget.style.background = '#fff';
               }}>
-              Clear All Data
+              {clearDataLoading ? 'Clearing...' : 'Clear All Data'}
             </button>
           </div>
 

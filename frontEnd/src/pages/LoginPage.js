@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
-const API_BASE_URL = 'http://localhost:8000';
+import { API_BASE_URL } from '../utils/api';
 
 const LoginPage = () => {
+  // const API_BASE_URL = 'http://localhost:8000'; (Moved to utils)
   useEffect(() => {
     const root = document.documentElement;
     const prevBodyOverflow = document.body.style.overflow;

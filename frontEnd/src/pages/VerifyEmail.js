@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const API_BASE_URL = 'http://localhost:8000';
+import { API_BASE_URL } from '../utils/api';
 
 const VerifyEmail = () => {
+  // const API_BASE_URL = 'http://localhost:8000'; (Moved to utils)
   const navigate = useNavigate();
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');

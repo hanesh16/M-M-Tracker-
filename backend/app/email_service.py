@@ -19,10 +19,10 @@ def send_verification_email(user_email: str, verification_token: str) -> bool:
     Returns True if successful, False otherwise.
     """
     try:
-        # If SMTP credentials not configured, fall back to console printing
+        # Check if SMTP credentials are configured
         if not SMTP_USER or not SMTP_PASS:
-            print_verification_link(user_email, verification_token)
-            return True
+            print("Error: SMTP credentials not configured in .env")
+            return False
         
         verification_link = f"{FRONTEND_URL}/verify?token={verification_token}"
         
@@ -89,17 +89,4 @@ M&M Tracker Team
         
     except Exception as e:
         print(f"Failed to send verification email: {e}")
-        # Fall back to console print
-        print_verification_link(user_email, verification_token)
         return False
-
-def print_verification_link(user_email: str, verification_token: str):
-    """Fallback: print verification link to console (for development/testing)"""
-    verification_link = f"{FRONTEND_URL}/verify?token={verification_token}"
-    print(f"\n{'='*60}")
-    print(f"VERIFICATION EMAIL (DEV MODE - Console)")
-    print(f"{'='*60}")
-    print(f"User: {user_email}")
-    print(f"Verification Link: {verification_link}")
-    print(f"Token: {verification_token}")
-    print(f"{'='*60}\n")

@@ -4,8 +4,10 @@ import Footer2 from '../components/footer2';
 import { useCurrency } from '../context/CurrencyContext';
 import { formatMoney } from '../utils/currencyUtils';
 
+import { API_BASE_URL } from '../utils/api';
+
 const AddExpense = () => {
-  const API_BASE_URL = 'http://localhost:8000';
+  // const API_BASE_URL = 'http://localhost:8000'; (Moved to utils)
   const token = typeof window !== 'undefined' ? localStorage.getItem('det-token') : null;
   const { currency } = useCurrency();
   // Form states
@@ -20,7 +22,7 @@ const AddExpense = () => {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [categoryFilter, setCategoryFilter] = useState('all');
-  
+
   // Edit mode states
   const [editModeRegular, setEditModeRegular] = useState(false);
   const [editModeAdditional, setEditModeAdditional] = useState(false);
@@ -62,7 +64,7 @@ const AddExpense = () => {
   }, []);
 
   const categories = [
-    'Rent', 'Internet', 'Phone', 'Groceries', 'Transport', 'Entertainment', 
+    'Rent', 'Internet', 'Phone', 'Groceries', 'Transport', 'Entertainment',
     'Shopping', 'Health', 'Education', 'Utilities', 'Dining', 'Other'
   ];
 
@@ -247,7 +249,7 @@ const AddExpense = () => {
             gap: '30px',
             marginBottom: '40px'
           }}>
-            
+
             {/* Add Expense Form */}
             <div style={{
               background: '#fffbf0',

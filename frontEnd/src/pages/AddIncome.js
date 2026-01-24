@@ -4,8 +4,10 @@ import Footer2 from '../components/footer2';
 import { useCurrency } from '../context/CurrencyContext';
 import { formatMoney } from '../utils/currencyUtils';
 
+import { API_BASE_URL } from '../utils/api';
+
 const AddIncome = () => {
-  const API_BASE_URL = 'http://localhost:8000';
+  // const API_BASE_URL = 'http://localhost:8000'; (Moved to utils)
   const token = typeof window !== 'undefined' ? localStorage.getItem('det-token') : null;
   const { currency } = useCurrency();
   // Form states
@@ -40,7 +42,6 @@ const AddIncome = () => {
   // Saving plans from backend
   const [savingPlans, setSavingPlans] = useState([]);
   const [plannedTotal, setPlannedTotal] = useState(0);
-  const [plannedCount, setPlannedCount] = useState(0);
 
   // Fetch incomes/expenses from backend
   const fetchIncomes = async () => {
@@ -243,11 +244,11 @@ const AddIncome = () => {
   // Filter expenses and plans by month/year
   const filteredExpenses = expenses.filter(expense => {
     const expenseDate = new Date(expense.date);
-    return expenseDate.getMonth() + 1 === parseInt(selectedMonth) && 
-           expenseDate.getFullYear() === parseInt(selectedYear);
+    return expenseDate.getMonth() + 1 === parseInt(selectedMonth) &&
+      expenseDate.getFullYear() === parseInt(selectedYear);
   });
 
-  const filteredPlans = savingPlans.filter(plan => 
+  const filteredPlans = savingPlans.filter(plan =>
     plan.month === parseInt(selectedMonth) && plan.year === parseInt(selectedYear)
   );
 
@@ -284,16 +285,13 @@ const AddIncome = () => {
       if (res.ok) {
         const data = await res.json();
         setPlannedTotal(data.total_planned);
-        setPlannedCount(data.count);
       } else {
         // Reset if summary fails
         setPlannedTotal(0);
-        setPlannedCount(0);
       }
     } catch (err) {
       console.error('Failed to load saving plan summary', err);
       setPlannedTotal(0);
-      setPlannedCount(0);
     }
   };
 
@@ -357,7 +355,7 @@ const AddIncome = () => {
             gap: '30px',
             marginBottom: '40px'
           }}>
-            
+
             {/* Add Income Form */}
             <div style={{
               background: '#fffbf0',
@@ -668,11 +666,11 @@ const AddIncome = () => {
                   <p style={{ color: '#6b6359', fontSize: '0.85rem', margin: '0 0 5px 0', fontWeight: '600' }}>
                     Savings This Month
                   </p>
-                  <p style={{ 
-                    color: monthlySavings >= 0 ? '#f6b7a0' : '#c62828', 
-                    fontSize: '1.8rem', 
-                    fontWeight: 'bold', 
-                    margin: 0 
+                  <p style={{
+                    color: monthlySavings >= 0 ? '#f6b7a0' : '#c62828',
+                    fontSize: '1.8rem',
+                    fontWeight: 'bold',
+                    margin: 0
                   }}>
                     {formatMoney(monthlySavings, currency)}
                   </p>
@@ -852,7 +850,7 @@ const AddIncome = () => {
                     </button>
                   )}
                 </div>
-                
+
                 <div style={{ marginBottom: '15px' }}>
                   {filteredPlans.length > 0 ? (
                     filteredPlans.map(plan => (
@@ -950,11 +948,11 @@ const AddIncome = () => {
                     <p style={{ color: '#6b6359', fontSize: '0.9rem', fontWeight: '600', margin: 0 }}>
                       Remaining Savings:
                     </p>
-                    <p style={{ 
-                      color: remainingSavings >= 0 ? '#2e7d32' : '#c62828', 
-                      fontSize: '1.1rem', 
-                      fontWeight: 'bold', 
-                      margin: 0 
+                    <p style={{
+                      color: remainingSavings >= 0 ? '#2e7d32' : '#c62828',
+                      fontSize: '1.1rem',
+                      fontWeight: 'bold',
+                      margin: 0
                     }}>
                       {formatMoney(remainingSavings, currency)}
                     </p>

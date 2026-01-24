@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
-const API_BASE_URL = 'http://localhost:8000';
+import { API_BASE_URL } from '../utils/api';
 
 const SignupPage = () => {
   const navigate = useNavigate();
@@ -54,10 +54,10 @@ const SignupPage = () => {
       }
 
       // Store verification info and email
-      localStorage.setItem('det-signup-email', form.email);
+      // localStorage.setItem('det-signup-email', form.email);
       setError('');
-      alert('Account created! Check console for verification link.');
-      navigate('/verify-email');
+      alert('Account created! Please log in.');
+      navigate('/login');
     } catch (err) {
       setError('Network error. Make sure backend is running on http://localhost:8000');
       console.error('Signup error:', err);
@@ -131,9 +131,10 @@ const SignupPage = () => {
           <div className="col-12 d-grid">
             <button
               type="submit"
+              disabled={loading}
               className="btn py-2 fw-semibold signup-save-btn"
             >
-              Save
+              {loading ? 'Saving...' : 'Save'}
             </button>
           </div>
         </form>

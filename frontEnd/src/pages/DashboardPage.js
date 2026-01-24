@@ -4,9 +4,10 @@ import { formatMoney } from '../utils/currencyUtils';
 import NavHeader from '../components/NavHeader';
 import Footer2 from '../components/footer2';
 
-const API_BASE_URL = 'http://localhost:8000';
+import { API_BASE_URL } from '../utils/api';
 
 const DashboardPage = () => {
+  // const API_BASE_URL = 'http://localhost:8000'; (Moved to utils)
   const { currency } = useCurrency();
   const [userName, setUserName] = useState('');
   const token = localStorage.getItem('det-token');
@@ -16,25 +17,25 @@ const DashboardPage = () => {
   const [selectedYear, setSelectedYear] = useState('');
   const [expenseIdOrder, setExpenseIdOrder] = useState([]);
   const [isHovering, setIsHovering] = useState(false);
-  
+
   // Modal states
   const [showExpenseModal, setShowExpenseModal] = useState(false);
   const [showIncomeModal, setShowIncomeModal] = useState(false);
-  
+
   // Expense form states
   const [expenseCategory, setExpenseCategory] = useState('');
   const [expenseAmount, setExpenseAmount] = useState('');
   const [expenseDate, setExpenseDate] = useState('');
   const [expenseNotes, setExpenseNotes] = useState('');
   const [expenseSubmitted, setExpenseSubmitted] = useState(false);
-  
+
   // Income form states
   const [incomeSource, setIncomeSource] = useState('');
   const [incomeAmount, setIncomeAmount] = useState('');
   const [incomeDate, setIncomeDate] = useState('');
   const [incomeNotes, setIncomeNotes] = useState('');
   const [incomeSubmitted, setIncomeSubmitted] = useState(false);
-  
+
   const expenseCategories = [
     'Groceries',
     'Transport',
@@ -47,7 +48,7 @@ const DashboardPage = () => {
     'Education',
     'Other'
   ];
-  
+
   const incomeSources = [
     'Salary',
     'Freelance',
@@ -114,7 +115,8 @@ const DashboardPage = () => {
             amount: parseFloat(expenseAmount),
             expense_date: expenseDate,
             notes: expenseNotes,
-            expense_type: 'additional'
+            expense_type: 'additional',
+            currency: currency
           })
         });
 
@@ -151,7 +153,8 @@ const DashboardPage = () => {
             source: incomeSource,
             amount: parseFloat(incomeAmount),
             income_date: incomeDate,
-            notes: incomeNotes
+            notes: incomeNotes,
+            currency: currency
           })
         });
 
@@ -212,21 +215,21 @@ const DashboardPage = () => {
   useEffect(() => {
     if (!isHovering && expenseIdOrder.length > 0) {
       // Generate shuffle sequences based on number of expenses
-      const sequences = 
+      const sequences =
         expenseIdOrder.length === 3
           ? [
-              [expenseIdOrder[0], expenseIdOrder[1], expenseIdOrder[2]],
-              [expenseIdOrder[2], expenseIdOrder[1], expenseIdOrder[0]],
-              [expenseIdOrder[1], expenseIdOrder[2], expenseIdOrder[0]],
-              [expenseIdOrder[0], expenseIdOrder[2], expenseIdOrder[1]]
-            ]
+            [expenseIdOrder[0], expenseIdOrder[1], expenseIdOrder[2]],
+            [expenseIdOrder[2], expenseIdOrder[1], expenseIdOrder[0]],
+            [expenseIdOrder[1], expenseIdOrder[2], expenseIdOrder[0]],
+            [expenseIdOrder[0], expenseIdOrder[2], expenseIdOrder[1]]
+          ]
           : Array.from({ length: expenseIdOrder.length }, (_, i) => {
-              const rotated = [...expenseIdOrder];
-              for (let j = 0; j < i; j++) {
-                rotated.unshift(rotated.pop());
-              }
-              return rotated;
-            });
+            const rotated = [...expenseIdOrder];
+            for (let j = 0; j < i; j++) {
+              rotated.unshift(rotated.pop());
+            }
+            return rotated;
+          });
 
       let seqIdx = 0;
       const interval = setInterval(() => {
@@ -267,7 +270,7 @@ const DashboardPage = () => {
         padding: '40px 20px'
       }}>
         <div className="container" style={{ maxWidth: '1000px', position: 'relative' }}>
-          
+
           {/* Welcome Text Section - Top Left */}
           <div style={{
             position: 'absolute',
@@ -307,15 +310,15 @@ const DashboardPage = () => {
             alignItems: 'center',
             zIndex: 5
           }}>
-            <img 
-              src={require('../images/pic16.png')} 
-              alt="M&M Tracker" 
+            <img
+              src={require('../images/pic16.png')}
+              alt="M&M Tracker"
               style={{
                 maxHeight: '100%',
                 width: 'auto',
                 height: 'auto',
                 objectFit: 'contain'
-              }} 
+              }}
             />
           </div>
 
@@ -325,7 +328,7 @@ const DashboardPage = () => {
           }}></div>
 
           {/* Summary Cards Section */}
-          <div 
+          <div
             style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
@@ -334,52 +337,52 @@ const DashboardPage = () => {
             }}
           >
             {summaryCards.map((card, index) => (
-                <div 
-                  key={index}
-                  style={{
-                    background: '#fffbf0',
-                    borderRadius: '20px',
-                    padding: '30px',
-                    boxShadow: '0 4px 16px rgba(0,0,0,0.05)',
-                    transition: 'transform 0.3s ease, box-shadow 0.2s ease',
-                    cursor: 'pointer'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-4px)';
-                    e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.08)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.05)';
-                  }}>
-                  <h3 style={{
-                    color: card.color,
-                    fontSize: '0.9rem',
-                    fontWeight: '600',
-                    margin: '0 0 15px 0',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.5px'
-                  }}>
-                    {card.title}
-                  </h3>
-                  <p style={{
-                    color: '#2f2b28',
-                    fontSize: '2.5rem',
-                    fontWeight: 'bold',
-                    margin: '0',
-                    marginBottom: '5px'
-                  }}>
-                    {formatMoney(card.value, currency)}
-                  </p>
-                  <p style={{
-                    color: '#9b8f84',
-                    fontSize: '0.85rem',
-                    margin: '0'
-                  }}>
-                    {card.note}
-                  </p>
-                </div>
-              ))}
+              <div
+                key={index}
+                style={{
+                  background: '#fffbf0',
+                  borderRadius: '20px',
+                  padding: '30px',
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.05)',
+                  transition: 'transform 0.3s ease, box-shadow 0.2s ease',
+                  cursor: 'pointer'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-4px)';
+                  e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.08)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.05)';
+                }}>
+                <h3 style={{
+                  color: card.color,
+                  fontSize: '0.9rem',
+                  fontWeight: '600',
+                  margin: '0 0 15px 0',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px'
+                }}>
+                  {card.title}
+                </h3>
+                <p style={{
+                  color: '#2f2b28',
+                  fontSize: '2.5rem',
+                  fontWeight: 'bold',
+                  margin: '0',
+                  marginBottom: '5px'
+                }}>
+                  {formatMoney(card.value, currency)}
+                </p>
+                <p style={{
+                  color: '#9b8f84',
+                  fontSize: '0.85rem',
+                  margin: '0'
+                }}>
+                  {card.note}
+                </p>
+              </div>
+            ))}
           </div>
 
           {/* Recent Activity Section */}
@@ -420,10 +423,10 @@ const DashboardPage = () => {
                   }}>
                     Day
                   </label>
-                  <input 
-                    type="number" 
-                    min="1" 
-                    max="31" 
+                  <input
+                    type="number"
+                    min="1"
+                    max="31"
                     placeholder="1-31"
                     value={selectedDay}
                     onChange={(e) => setSelectedDay(e.target.value)}
@@ -460,10 +463,10 @@ const DashboardPage = () => {
                   }}>
                     Month
                   </label>
-                  <input 
-                    type="number" 
-                    min="1" 
-                    max="12" 
+                  <input
+                    type="number"
+                    min="1"
+                    max="12"
                     placeholder="1-12"
                     value={selectedMonth}
                     onChange={(e) => setSelectedMonth(parseInt(e.target.value) || '')}
@@ -500,9 +503,9 @@ const DashboardPage = () => {
                   }}>
                     Year
                   </label>
-                  <input 
-                    type="number" 
-                    min="2020" 
+                  <input
+                    type="number"
+                    min="2020"
                     placeholder="2026"
                     value={selectedYear}
                     onChange={(e) => setSelectedYear(parseInt(e.target.value) || '')}
@@ -527,7 +530,7 @@ const DashboardPage = () => {
                 </div>
 
                 {/* Reset Button */}
-                <button 
+                <button
                   onClick={() => {
                     setSelectedDay('');
                     setSelectedMonth('');
@@ -558,9 +561,9 @@ const DashboardPage = () => {
               </div>
             </div>
 
-            <div style={{ 
-              display: 'flex', 
-              flexDirection: 'column', 
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
               gap: '12px',
               position: 'relative',
               minHeight: expenseIdOrder.length * 80 + (expenseIdOrder.length - 1) * 12
@@ -572,19 +575,19 @@ const DashboardPage = () => {
                 expenseIdOrder.map((expenseId, displayIndex) => {
                   const expense = sortedFilteredExpenses.find(e => e.id === expenseId);
                   if (!expense) return null;
-                  
+
                   // Get color based on original index in filtered list
                   const originalIndex = sortedFilteredExpenses.findIndex(e => e.id === expenseId);
                   const softColors = ['#e8d5f2', '#c8e6c9', '#b3e5fc', '#ffccbc', '#fce4ec', '#d5f4e6'];
                   const boxColor = softColors[originalIndex % softColors.length];
-                  
+
                   // Calculate position
                   const cardHeight = 80;
                   const gapSize = 12;
                   const yPos = displayIndex * (cardHeight + gapSize);
-                  
+
                   return (
-                    <div 
+                    <div
                       key={expense.id}
                       style={{
                         background: boxColor,
@@ -610,83 +613,83 @@ const DashboardPage = () => {
                       onMouseLeave={(e) => {
                         e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.03)';
                       }}>
-                        <div style={{ flex: 1 }}>
-                          <p style={{
-                            color: '#2f2b28',
-                            fontSize: '1rem',
-                            fontWeight: '600',
-                            margin: '0 0 5px 0'
-                          }}>
-                            {expense.title}
-                          </p>
-                          <p style={{
-                            color: '#9b8f84',
-                            fontSize: '0.85rem',
-                            margin: '0'
-                          }}>
-                            {new Date(expense.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                          </p>
-                        </div>
-                        <div style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px'
+                      <div style={{ flex: 1 }}>
+                        <p style={{
+                          color: '#2f2b28',
+                          fontSize: '1rem',
+                          fontWeight: '600',
+                          margin: '0 0 5px 0'
                         }}>
-                          <p style={{
-                            color: expense.type === 'income' ? '#2e7d32' : '#DAA06D',
-                            fontSize: '1.2rem',
-                            fontWeight: 'bold',
-                            margin: '0'
-                          }}>
-                            {expense.type === 'income' ? '+' : '-'}{formatMoney(expense.amount, expense.currency || currency)}
-                          </p>
-                          {expense.type === 'income' && (
-                            <img 
-                              src={require('../images/pic17.png')} 
-                              alt="income" 
-                              style={{
-                                height: '45px',
-                                width: 'auto',
-                                objectFit: 'contain'
-                              }} 
-                            />
-                          )}
-                          {expense.type === 'expense' && expense.amount < 25 && (
-                            <img 
-                              src={require('../images/pic18.png')} 
-                              alt="low expense" 
-                              style={{
-                                height: '45px',
-                                width: 'auto',
-                                objectFit: 'contain'
-                              }} 
-                            />
-                          )}
-                          {expense.type === 'expense' && expense.amount >= 25 && expense.amount < 35 && (
-                            <img 
-                              src={require('../images/pic19.png')} 
-                              alt="high expense" 
-                              style={{
-                                height: '45px',
-                                width: 'auto',
-                                objectFit: 'contain'
-                              }} 
-                            />
-                          )}
-                          {expense.type === 'expense' && expense.amount >= 35 && (
-                            <img 
-                              src={require('../images/pic20.png')} 
-                              alt="very high expense" 
-                              style={{
-                                height: '60px',
-                                width: 'auto',
-                                objectFit: 'contain'
-                              }} 
-                            />
-                          )}
-                        </div>
+                          {expense.title}
+                        </p>
+                        <p style={{
+                          color: '#9b8f84',
+                          fontSize: '0.85rem',
+                          margin: '0'
+                        }}>
+                          {new Date(expense.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        </p>
                       </div>
-                    );
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px'
+                      }}>
+                        <p style={{
+                          color: expense.type === 'income' ? '#2e7d32' : '#DAA06D',
+                          fontSize: '1.2rem',
+                          fontWeight: 'bold',
+                          margin: '0'
+                        }}>
+                          {expense.type === 'income' ? '+' : '-'}{formatMoney(expense.amount, expense.currency || currency)}
+                        </p>
+                        {expense.type === 'income' && (
+                          <img
+                            src={require('../images/pic17.png')}
+                            alt="income"
+                            style={{
+                              height: '45px',
+                              width: 'auto',
+                              objectFit: 'contain'
+                            }}
+                          />
+                        )}
+                        {expense.type === 'expense' && expense.amount < 25 && (
+                          <img
+                            src={require('../images/pic18.png')}
+                            alt="low expense"
+                            style={{
+                              height: '45px',
+                              width: 'auto',
+                              objectFit: 'contain'
+                            }}
+                          />
+                        )}
+                        {expense.type === 'expense' && expense.amount >= 25 && expense.amount < 35 && (
+                          <img
+                            src={require('../images/pic19.png')}
+                            alt="high expense"
+                            style={{
+                              height: '45px',
+                              width: 'auto',
+                              objectFit: 'contain'
+                            }}
+                          />
+                        )}
+                        {expense.type === 'expense' && expense.amount >= 35 && (
+                          <img
+                            src={require('../images/pic20.png')}
+                            alt="very high expense"
+                            style={{
+                              height: '60px',
+                              width: 'auto',
+                              objectFit: 'contain'
+                            }}
+                          />
+                        )}
+                      </div>
+                    </div>
+                  );
                 })
               ) : (
                 <div style={{
@@ -708,7 +711,7 @@ const DashboardPage = () => {
           </div>
 
           {/* Quick Knowledge Section */}
-          <div 
+          <div
             style={{
               background: '#fbf4f3',
               borderRadius: '20px',
@@ -739,7 +742,7 @@ const DashboardPage = () => {
               justifyContent: 'center',
               flexWrap: 'wrap'
             }}>
-              <div 
+              <div
                 style={{
                   background: '#f0d9c4',
                   color: '#2f2b28',
@@ -771,7 +774,7 @@ const DashboardPage = () => {
                   Mocha carefully notes every expense so nothing goes unnoticed. Tracking spending helps him stay disciplined and prepared for future bills.
                 </p>
               </div>
-              <div 
+              <div
                 style={{
                   background: '#fbe2d9',
                   color: '#2f2b28',
@@ -807,10 +810,10 @@ const DashboardPage = () => {
           </div>
         </div>
       </div>
-      
+
       {/* Footer */}
       <Footer2 />
-      
+
       {/* Expense Modal */}
       {showExpenseModal && (
         <div style={{
@@ -826,7 +829,7 @@ const DashboardPage = () => {
           alignItems: 'center',
           zIndex: 1000
         }}
-        onClick={() => setShowExpenseModal(false)}>
+          onClick={() => setShowExpenseModal(false)}>
           <div style={{
             background: '#f0d9c4',
             borderRadius: '20px',
@@ -837,7 +840,7 @@ const DashboardPage = () => {
             overflowY: 'auto',
             boxShadow: '0 10px 40px rgba(0,0,0,0.2)'
           }}
-          onClick={(e) => e.stopPropagation()}>
+            onClick={(e) => e.stopPropagation()}>
             <div style={{
               display: 'flex',
               justifyContent: 'space-between',
@@ -864,7 +867,7 @@ const DashboardPage = () => {
                 ×
               </button>
             </div>
-            
+
             {expenseSubmitted && (
               <div style={{
                 background: '#c8e6c9',
@@ -879,7 +882,7 @@ const DashboardPage = () => {
                 ✓ Expense added successfully!
               </div>
             )}
-            
+
             <form onSubmit={handleExpenseSubmit} style={{
               display: 'flex',
               flexDirection: 'column',
@@ -1054,7 +1057,7 @@ const DashboardPage = () => {
           alignItems: 'center',
           zIndex: 1000
         }}
-        onClick={() => setShowIncomeModal(false)}>
+          onClick={() => setShowIncomeModal(false)}>
           <div style={{
             background: '#fbe2d9',
             borderRadius: '20px',
@@ -1065,7 +1068,7 @@ const DashboardPage = () => {
             overflowY: 'auto',
             boxShadow: '0 10px 40px rgba(0,0,0,0.2)'
           }}
-          onClick={(e) => e.stopPropagation()}>
+            onClick={(e) => e.stopPropagation()}>
             <div style={{
               display: 'flex',
               justifyContent: 'space-between',
@@ -1092,7 +1095,7 @@ const DashboardPage = () => {
                 ×
               </button>
             </div>
-            
+
             {incomeSubmitted && (
               <div style={{
                 background: '#c8e6c9',
@@ -1107,7 +1110,7 @@ const DashboardPage = () => {
                 ✓ Income added successfully!
               </div>
             )}
-            
+
             <form onSubmit={handleIncomeSubmit} style={{
               display: 'flex',
               flexDirection: 'column',
@@ -1266,7 +1269,7 @@ const DashboardPage = () => {
           </div>
         </div>
       )}
-      
+
       {/* Responsive Styles */}
       <style>{`
         @media (max-width: 768px) {
